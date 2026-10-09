@@ -104,7 +104,7 @@ function createHarness(sequencePaths, behavior) {
 		'asset#logo': 'image',
 		'asset#unused': 'image',
 		'asset#sequence': 'imageSequence',
-		'asset#smart': 'imageSmartFolder',
+		'asset#smart': 'imageFolder',
 		'asset#font': 'font',
 		'asset#reference': 'scene',
 		'asset#sheet': 'spreadsheet',
@@ -199,9 +199,10 @@ function createHarness(sequencePaths, behavior) {
 		getPlatform: () => 'Windows',
 		getAbsolutePath: (value) =>
 			behavior.emptyAbsolutePath ? '' : norm(value),
-		getRelativePath(from, to) {
-			const root = norm(from) + '/'
-			const target = norm(to)
+		getRelativePath(a, b) {
+			// matches real Cavalry behaviour: returns the path from b to a
+			const root = norm(b) + '/'
+			const target = norm(a)
 			return target.startsWith(root)
 				? target.slice(root.length)
 				: '../' + path.posix.basename(target)
@@ -269,7 +270,10 @@ function createHarness(sequencePaths, behavior) {
 				: []
 		},
 		isFile: (value) => files.has(norm(value)),
-		isDirectory: (value) => dirs.has(norm(value)),
+		isDirectory: (value) =>
+			behavior.smartFolderNotDirectory && norm(value) === 'C:/smart'
+				? false
+				: dirs.has(norm(value)),
 		filePathExists: (value) =>
 			files.has(norm(value)) || dirs.has(norm(value)),
 		getFileSize: (value) => sizes[norm(value)] || 0,
@@ -476,7 +480,9 @@ function testScanAndPackage() {
 	assert(
 		harness.assetPaths['asset#logo'].startsWith(
 			'D:/packages/Scene_Package/Assets/Images/'
-		)
+		),
+		'relink should use an absolute path inside the package, got: ' +
+			harness.assetPaths['asset#logo']
 	)
 	assert.strictEqual(
 		harness.assetPaths['asset#font'],
@@ -705,6 +711,88 @@ function testProjectRelativeSavedScenePathIsResolved() {
 	)
 }
 
+function testSmartFolderDetectedByTypeWhenDirectoryCheckFails() {
+	const harness = createHarness(null, { smartFolderNotDirectory: true })
+	const options = { categorise: true, includeReferences: true, openFolder: false }
+	const scan = harness.context.scanProjectAssets(options)
+	assert.strictEqual(scan.errors.length, 0, scan.errors.join('\n'))
+	const smart = scan.entries.find((entry) => entry.id === 'asset#smart')
+	assert.strictEqual(
+		smart.kind,
+		'smartFolder',
+		'an imageFolder asset must be treated as a Smart Folder even when isDirectory fails'
+	)
+	assert.strictEqual(smart.mappings.length, 2)
+	const outcome = harness.context.executePackage(scan, 'D:/packages', 'SmartByType_Package', options)
+	assert.strictEqual(outcome.ok, true, outcome.message)
+	assert(
+		harness.files.has(
+			'D:/packages/SmartByType_Package/Assets/SmartFolders/Smart Images/nested/data.json'
+		)
+	)
+	assert.strictEqual(
+		harness.assetPaths['asset#smart'],
+		'D:/packages/SmartByType_Package/Assets/SmartFolders/Smart Images/cover.jpg',
+		'Smart Folder should relink via a top-level file inside the packaged folder'
+	)
+}
+
+function testIncludeFontsCopiesAndRelinks() {
+	const harness = createHarness()
+	const options = {
+		categorise: true,
+		includeReferences: true,
+		includeFonts: true,
+		openFolder: false,
+	}
+	const scan = harness.context.scanProjectAssets(options)
+	assert.strictEqual(scan.errors.length, 0, scan.errors.join('\n'))
+	const font = scan.entries.find((entry) => entry.id === 'asset#font')
+	assert.strictEqual(font.included, true, 'font should be copied when includeFonts is on')
+	assert(
+		scan.warnings.some((value) => value.includes('licence permits redistribution')),
+		'copying a font should carry a licence warning'
+	)
+	const outcome = harness.context.executePackage(scan, 'D:/packages', 'Fonts_Package', options)
+	assert.strictEqual(outcome.ok, true, outcome.message)
+	assert(harness.files.has('D:/packages/Fonts_Package/Assets/Fonts/licensed.ttf'))
+	assert.strictEqual(
+		harness.assetPaths['asset#font'],
+		'D:/packages/Fonts_Package/Assets/Fonts/licensed.ttf'
+	)
+}
+
+function testBilingualInterface() {
+	const harness = createHarness()
+	assert.strictEqual(harness.context.tr('ui.scan'), 'Scan Used Assets')
+	assert.strictEqual(
+		harness.context.tr('missing.key'),
+		'missing.key',
+		'unknown keys should fall back to the key itself'
+	)
+	harness.context.setLanguage('zh')
+	assert.strictEqual(harness.context.tr('ui.scan'), '扫描已使用素材')
+	assert(harness.context.scanButton.getText().includes('扫描'))
+	assert(harness.context.packageButton.getText().includes('打包'))
+	assert(
+		harness.context.statusLabel.getText().includes('个已用文件素材'),
+		'switching language should re-render the scan summary, got: ' +
+			harness.context.statusLabel.getText()
+	)
+	const scanZh = harness.context.scanProjectAssets({
+		categorise: true,
+		includeReferences: true,
+	})
+	assert(
+		scanZh.warnings.some((value) => value.includes('递归收集')),
+		'scan warnings should be localised'
+	)
+	harness.context.setLanguage('en')
+	assert.strictEqual(harness.context.tr('ui.scan'), 'Scan Used Assets')
+	assert(harness.context.scanButton.getText().includes('Scan'))
+	assert(harness.context.statusLabel.getText().includes('used file asset'))
+}
+
 testScanAndPackage()
 testSequenceGapBlocksPackage()
 testRelinkFailureRestoresOriginalScene()
@@ -717,4 +805,7 @@ testBadProjectMarkerAndReportFailure()
 testSelectedPruneFailureRestoresOriginal()
 testUnsavedSceneShowsTheBlockingReason()
 testProjectRelativeSavedScenePathIsResolved()
+testSmartFolderDetectedByTypeWhenDirectoryCheckFails()
+testIncludeFontsCopiesAndRelinks()
+testBilingualInterface()
 console.log('Project Packager tests passed.')

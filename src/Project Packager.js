@@ -5,7 +5,281 @@
 ui.setTitle('Project Packager')
 
 var SCRIPT_NAME = 'Project Packager'
-var SCRIPT_VERSION = '1.1.0'
+var SCRIPT_VERSION = '0.1.0'
+
+// =============================================================================
+// LOCALISATION (English / 中文)
+// =============================================================================
+
+var STRINGS = {
+	en: {
+		'ui.title': 'Project Packager',
+		'ui.language': '中文 / EN',
+		'ui.languageTip': 'Switch interface language / 切换界面语言',
+		'ui.destination': 'Destination parent folder',
+		'ui.destinationPlaceholder': 'Choose the folder that will contain the package',
+		'ui.packageName': 'Package name',
+		'ui.scopeSelected': 'Only selected/active Comp + nested Pre-Comps',
+		'ui.scopeSelectedTip': 'Packages only the Composition selected in the Assets Window (or the active Composition) and its nested Pre-Comps.',
+		'ui.categorise': 'Categorise assets by type',
+		'ui.includeReferences': 'Copy external .cv/.cvc references',
+		'ui.includeReferencesTip': 'Copies external .cv/.cvc files themselves; dependencies inside them are reported only, not collected recursively.',
+		'ui.includeFonts': 'Copy font files (check licence)',
+		'ui.includeFontsTip': 'Fonts are copied to Assets/Fonts and relinked. Confirm the licence allows redistribution.',
+		'ui.openFolder': 'Open package folder when complete',
+		'ui.usedDependencies': 'Used dependencies',
+		'ui.scan': 'Scan Used Assets',
+		'ui.package': 'Package Project',
+		'ui.ready': 'Ready',
+		'ui.blocking': 'BLOCKING: {0}',
+		'ui.files': '{0} file(s)',
+		'ui.summarySelected': 'Selected: {0} + {1} nested Pre-Comp(s) · ',
+		'ui.summaryAll': 'All Compositions · ',
+		'ui.summaryAssets': '{0} used file asset(s), {1}',
+		'ui.summaryErrors': ' · {0} blocking error(s)',
+		'ui.summaryWarnings': ' · {0} warning(s)',
+		'ui.cannotPackage': 'Cannot package: {0}',
+		'ui.scanning': 'Scanning Compositions and dependencies...',
+		'ui.scanFailed': 'Scan failed: {0}',
+		'ui.fixErrors': 'Fix the blocking scan errors before packaging.',
+		'ui.copying': 'Copying and verifying assets...',
+		'err.inspectChildren': 'Could not inspect children of {0}: {1}',
+		'err.readActiveComp': 'Could not read the active Composition: {0}',
+		'err.readSelection': 'Could not read Composition selection: {0}',
+		'err.enumComps': 'Could not enumerate Compositions: {0}',
+		'err.noComps': 'No Composition was found in the Scene.',
+		'err.inspectCompRef': 'Could not inspect Composition Reference {0}: {1}',
+		'err.inspectComp': 'Could not inspect Composition {0}: {1}',
+		'err.restoreActiveComp': 'Could not restore the active Composition: {0}',
+		'err.selectOneComp': 'Select only one Composition in the Assets Window.',
+		'err.noValidComp': 'No valid selected or active Composition was found.',
+		'err.inspectConnections': 'Could not inspect connections for {0}: {1}',
+		'err.enumSeqFrames': 'Could not enumerate image-sequence frames: {0}',
+		'err.seqGap': 'Sequence has a frame-number gap between {0} and {1}.',
+		'err.dirTraversal': 'Directory traversal returned no file list: {0}',
+		'err.destCollision': 'Could not resolve destination collision for {0}',
+		'err.readScenePath': 'Could not read the current Scene path from Cavalry: {0}',
+		'err.emptyScenePath': 'Cavalry getSceneFilePath() returned an empty path — the Scene has probably never been saved. Save the Scene as a .cv file first, then scan again.',
+		'err.projectRelativeNoRoot': 'The Scene path is Project-relative, but Cavalry did not return a Project root: {0}',
+		'err.classifyUnused': 'Could not classify unused asset {0}: {1}',
+		'err.classifyAsset': 'Could not classify asset {0}: {1}',
+		'err.noFilePath': 'Asset has no readable file path.',
+		'err.inspectSourceDir': 'Could not inspect source directory: {0}',
+		'err.listSmartFolder': 'Could not list Smart Folder: {0}',
+		'err.smartFolderMissing': 'Smart Folder is missing: {0}',
+		'err.smartFolderOutside': 'Smart Folder contains a path outside its root: {0}',
+		'err.missingSource': 'Missing source file: {0}',
+		'err.recordState': 'Could not record original Assets Window state. Nothing was changed: {0}',
+		'err.noDestination': 'Choose an existing destination folder.',
+		'err.packageExists': 'The package folder already exists. Choose a new name or destination.',
+		'err.blockedByScan': 'Packaging is blocked by {0} scan error(s).',
+		'err.saveOriginal': 'Could not save the original Scene. Nothing was changed.',
+		'err.createRoot': 'Could not create package root.',
+		'err.createFolder': 'Could not create {0}.',
+		'err.writeDescription': 'Could not write projectDescription.json.',
+		'err.createSmartDest': 'Could not create Smart Folder destination: {0}',
+		'err.copyFailed': 'Copy or verification failed: {0}',
+		'err.writeEarlyReport': 'Could not write package-report.json before relinking.',
+		'err.activateProject': 'Cavalry did not activate the new Project root.',
+		'err.savePackaged': 'Could not save the packaged Scene.',
+		'err.saveAsSwitch': 'Save As did not switch to the packaged Scene.',
+		'err.validationFailed': 'Package validation failed. See package-report.json.',
+		'err.writeFinalReport': 'Could not write the final package-report.json.',
+		'err.reopenOriginal': 'Could not reopen original Scene: {0}',
+		'err.notOriginalScene': 'The active Scene is not the original Scene.',
+		'err.verifyOriginalScene': 'Could not verify the original Scene: {0}',
+		'err.restoreProject': 'Could not restore original Project: {0}',
+		'err.notOriginalProject': 'The active Project is not the original Project.',
+		'err.verifyOriginalProject': 'Could not verify the original Project: {0}',
+		'err.compCountRestored': 'The original Composition count was not restored.',
+		'err.compRestored': 'Original Composition was not restored: {0}',
+		'err.assetsRestored': 'The original Assets Window contents were not restored.',
+		'err.assetRestored': 'Original Asset was not restored: {0}',
+		'err.verifySceneContents': 'Could not verify original Scene contents: {0}',
+		'err.restoreActiveComp2': 'Could not restore the original active Composition: {0}',
+		'err.assetPathRestored': 'Original asset path was not restored: {0}',
+		'err.verifyAsset': 'Could not verify original asset {0}: {1}',
+		'err.pruneSafety': 'Refusing to remove unrelated Compositions before switching to the packaged Scene.',
+		'err.pruneComp': 'Could not remove unrelated Composition: {0}',
+		'err.pruneAsset': 'Could not remove unrelated asset: {0}',
+		'err.pruneKept': 'A required Composition was removed: {0}',
+		'err.savePruned': 'Could not save the selected-Composition Scene after pruning.',
+		'err.reopenPackaged': 'Could not reopen packaged Scene: {0}',
+		'err.packagedScenePath': 'Packaged Scene did not reopen from the expected path.',
+		'err.packagedProjectRoot': 'Packaged Scene did not activate the new Project root.',
+		'err.markerMissing': 'Scenes/path-to-project was not created.',
+		'err.markerWrong': 'Scenes/path-to-project does not point to the package root.',
+		'err.markerVerify': 'Could not verify Scenes/path-to-project: {0}',
+		'err.unexpectedComps': 'The packaged Scene contains unexpected Compositions.',
+		'err.compMissing': 'Required Composition is missing: {0}',
+		'err.unrelatedAssetRemains': 'Unrelated asset remains in packaged Scene: {0}',
+		'err.verifyPackagedComps': 'Could not verify packaged Compositions: {0}',
+		'err.resolvesOutside': '{0} resolves outside the package after reopening.',
+		'err.resolvesMissing': '{0} resolves to a missing packaged path.',
+		'warn.compRefNoTarget': 'Composition Reference has no local target (possibly an external .cv reference): {0}',
+		'warn.restoreSelection': 'Could not restore the original selection: {0}',
+		'warn.refCompOutside': 'Referenced Composition is outside this Scene: {0}',
+		'warn.onlineDependency': '{0} ({1}) is an online or non-file dependency and remains external.',
+		'warn.fontNotCopied': 'Font is not copied by default; enable the font option or install it on the destination system.',
+		'warn.fontCopied': 'Font file was copied; confirm its licence permits redistribution.',
+		'warn.refExcluded': 'External Cavalry reference was excluded and will not be portable.',
+		'warn.refCopiedShallow': 'The reference file is copied, but dependencies inside it are not collected recursively.',
+		'warn.smartFolderEmpty': 'Smart Folder is empty.',
+		'msg.packaged': 'Packaged {0} dependency record(s), {1}.',
+		'msg.failed': 'Packaging failed: {0}',
+		'msg.restoreUnverified': ' WARNING: original Scene or Project restoration could not be verified: {0}. Reopen the original Scene manually: {1}.',
+		'msg.restored': ' The original Scene and Project were restored.',
+		'msg.failedKept': ' The failed package was kept for diagnosis.',
+		'msg.reportUnwritten': ' WARNING: package-report.json could not be written.',
+		'kind.file': 'file',
+		'kind.sequence': 'sequence',
+		'kind.smartFolder': 'smart folder',
+		'kind.font': 'font',
+		'kind.reference': 'reference',
+	},
+	zh: {
+		'ui.title': 'Project Packager（工程打包器）',
+		'ui.language': '中文 / EN',
+		'ui.languageTip': '切换界面语言 / Switch interface language',
+		'ui.destination': '目标父文件夹',
+		'ui.destinationPlaceholder': '选择用于存放打包结果的文件夹',
+		'ui.packageName': '打包名称',
+		'ui.scopeSelected': '仅打包选中/活动合成（含嵌套预合成）',
+		'ui.scopeSelectedTip': '只打包 Assets 窗口中选中的合成（未选中时为当前活动合成）及其嵌套预合成。',
+		'ui.categorise': '按类型分类素材',
+		'ui.includeReferences': '复制外部 .cv/.cvc 引用',
+		'ui.includeReferencesTip': '复制外部 .cv/.cvc 文件本身；其内部嵌套依赖仅报告，不递归收集。',
+		'ui.includeFonts': '复制字体文件（注意授权）',
+		'ui.includeFontsTip': '字体将复制到 Assets/Fonts 并重链，请确认授权允许再分发。',
+		'ui.openFolder': '完成后打开打包文件夹',
+		'ui.usedDependencies': '已使用的依赖',
+		'ui.scan': '扫描已使用素材',
+		'ui.package': '开始打包',
+		'ui.ready': '就绪',
+		'ui.blocking': '阻止项：{0}',
+		'ui.files': '{0} 个文件',
+		'ui.summarySelected': '已选：{0} + {1} 个嵌套预合成 · ',
+		'ui.summaryAll': '全部合成 · ',
+		'ui.summaryAssets': '{0} 个已用文件素材，{1}',
+		'ui.summaryErrors': ' · {0} 个阻止性错误',
+		'ui.summaryWarnings': ' · {0} 个警告',
+		'ui.cannotPackage': '无法打包：{0}',
+		'ui.scanning': '正在扫描合成与依赖…',
+		'ui.scanFailed': '扫描失败：{0}',
+		'ui.fixErrors': '请先解决阻止性扫描错误，再进行打包。',
+		'ui.copying': '正在复制并校验素材…',
+		'err.inspectChildren': '无法检查 {0} 的子级：{1}',
+		'err.readActiveComp': '无法读取当前活动合成：{0}',
+		'err.readSelection': '无法读取合成选择：{0}',
+		'err.enumComps': '无法枚举合成：{0}',
+		'err.noComps': '场景中未找到任何合成。',
+		'err.inspectCompRef': '无法检查合成引用 {0}：{1}',
+		'err.inspectComp': '无法检查合成 {0}：{1}',
+		'err.restoreActiveComp': '无法恢复活动合成：{0}',
+		'err.selectOneComp': '请只在 Assets 窗口中选中一个合成。',
+		'err.noValidComp': '未找到有效的选中或活动合成。',
+		'err.inspectConnections': '无法检查 {0} 的连接：{1}',
+		'err.enumSeqFrames': '无法枚举图片序列帧：{0}',
+		'err.seqGap': '序列在 {0} 与 {1} 之间存在帧号断档。',
+		'err.dirTraversal': '目录遍历未返回文件列表：{0}',
+		'err.destCollision': '无法解决目标路径冲突：{0}',
+		'err.readScenePath': '无法从 Cavalry 读取当前场景路径：{0}',
+		'err.emptyScenePath': '当前场景尚未保存为 .cv 文件（getSceneFilePath() 返回空路径）。请先保存场景，再重新扫描。',
+		'err.projectRelativeNoRoot': '场景路径为工程相对路径，但 Cavalry 未返回工程根目录：{0}',
+		'err.classifyUnused': '无法分类未使用的素材 {0}：{1}',
+		'err.classifyAsset': '无法分类素材 {0}：{1}',
+		'err.noFilePath': '素材没有可读取的文件路径。',
+		'err.inspectSourceDir': '无法检查源目录：{0}',
+		'err.listSmartFolder': '无法列出智能文件夹：{0}',
+		'err.smartFolderMissing': '智能文件夹丢失：{0}',
+		'err.smartFolderOutside': '智能文件夹包含其根目录之外的路径：{0}',
+		'err.missingSource': '源文件缺失：{0}',
+		'err.recordState': '无法记录 Assets 窗口的原始状态，未做任何改动：{0}',
+		'err.noDestination': '请选择一个已存在的目标文件夹。',
+		'err.packageExists': '打包文件夹已存在，请更换名称或目标位置。',
+		'err.blockedByScan': '打包被 {0} 个扫描错误阻止。',
+		'err.saveOriginal': '无法保存原始场景，未做任何改动。',
+		'err.createRoot': '无法创建打包根目录。',
+		'err.createFolder': '无法创建 {0}。',
+		'err.writeDescription': '无法写入 projectDescription.json。',
+		'err.createSmartDest': '无法创建智能文件夹目标目录：{0}',
+		'err.copyFailed': '复制或校验失败：{0}',
+		'err.writeEarlyReport': '无法在重链前写入 package-report.json。',
+		'err.activateProject': 'Cavalry 未激活新的工程根目录。',
+		'err.savePackaged': '无法保存打包后的场景。',
+		'err.saveAsSwitch': '另存为未能切换到打包场景。',
+		'err.validationFailed': '打包校验失败，详见 package-report.json。',
+		'err.writeFinalReport': '无法写入最终的 package-report.json。',
+		'err.reopenOriginal': '无法重新打开原始场景：{0}',
+		'err.notOriginalScene': '当前场景不是原始场景。',
+		'err.verifyOriginalScene': '无法验证原始场景：{0}',
+		'err.restoreProject': '无法恢复原始工程：{0}',
+		'err.notOriginalProject': '当前工程不是原始工程。',
+		'err.verifyOriginalProject': '无法验证原始工程：{0}',
+		'err.compCountRestored': '原始合成数量未能恢复。',
+		'err.compRestored': '原始合成未能恢复：{0}',
+		'err.assetsRestored': 'Assets 窗口的原始内容未能恢复。',
+		'err.assetRestored': '原始素材未能恢复：{0}',
+		'err.verifySceneContents': '无法验证原始场景内容：{0}',
+		'err.restoreActiveComp2': '无法恢复原始活动合成：{0}',
+		'err.assetPathRestored': '原始素材路径未能恢复：{0}',
+		'err.verifyAsset': '无法验证原始素材 {0}：{1}',
+		'err.pruneSafety': '在切换到打包场景之前，拒绝移除无关合成。',
+		'err.pruneComp': '无法移除无关合成：{0}',
+		'err.pruneAsset': '无法移除无关素材：{0}',
+		'err.pruneKept': '必需的合成被移除了：{0}',
+		'err.savePruned': '清理后无法保存选定合成的场景。',
+		'err.reopenPackaged': '无法重新打开打包场景：{0}',
+		'err.packagedScenePath': '打包场景未能从预期路径重新打开。',
+		'err.packagedProjectRoot': '打包场景未能激活新的工程根目录。',
+		'err.markerMissing': 'Scenes/path-to-project 未被创建。',
+		'err.markerWrong': 'Scenes/path-to-project 未指向打包根目录。',
+		'err.markerVerify': '无法验证 Scenes/path-to-project：{0}',
+		'err.unexpectedComps': '打包场景包含意外的合成。',
+		'err.compMissing': '必需的合成缺失：{0}',
+		'err.unrelatedAssetRemains': '打包场景中仍残留无关素材：{0}',
+		'err.verifyPackagedComps': '无法验证打包后的合成：{0}',
+		'err.resolvesOutside': '{0} 重新打开后解析到了包外路径。',
+		'err.resolvesMissing': '{0} 解析到的包内路径缺失。',
+		'warn.compRefNoTarget': '合成引用没有本地目标（可能是外部 .cv 引用）：{0}',
+		'warn.restoreSelection': '无法恢复原始选择：{0}',
+		'warn.refCompOutside': '被引用的合成不在此场景中：{0}',
+		'warn.onlineDependency': '{0}（{1}）是在线或非文件依赖，将保持外部引用。',
+		'warn.fontNotCopied': '字体默认不复制；请启用字体选项，或在目标系统上安装该字体。',
+		'warn.fontCopied': '字体文件已复制；请确认其授权允许再分发。',
+		'warn.refExcluded': '外部 Cavalry 引用已被排除，将不可移植。',
+		'warn.refCopiedShallow': '引用文件已复制，但其内部依赖不会被递归收集。',
+		'warn.smartFolderEmpty': '智能文件夹为空。',
+		'msg.packaged': '已打包 {0} 条依赖记录，共 {1}。',
+		'msg.failed': '打包失败：{0}',
+		'msg.restoreUnverified': ' 警告：无法验证原始场景或工程是否已恢复：{0}。请手动重新打开原始场景：{1}。',
+		'msg.restored': ' 原始场景与工程已恢复。',
+		'msg.failedKept': ' 失败的打包已保留，便于排查。',
+		'msg.reportUnwritten': ' 警告：无法写入 package-report.json。',
+		'kind.file': '文件',
+		'kind.sequence': '图片序列',
+		'kind.smartFolder': '智能文件夹',
+		'kind.font': '字体',
+		'kind.reference': '引用',
+	},
+}
+
+var currentLanguage = 'en'
+
+function tr(key) {
+	var table = STRINGS[currentLanguage] || STRINGS.en
+	var text = table[key]
+	if (typeof text !== 'string') text = STRINGS.en[key]
+	if (typeof text !== 'string') return key
+	for (var i = 1; i < arguments.length; i++)
+		text = text.split('{' + (i - 1) + '}').join(String(arguments[i]))
+	return text
+}
+
+function setLanguage(language) {
+	currentLanguage = language === 'zh' ? 'zh' : 'en'
+	if (typeof applyLanguage === 'function') applyLanguage()
+}
 
 // =============================================================================
 // PATH AND STRING HELPERS
@@ -105,12 +379,15 @@ function joinPath(left, right) {
 }
 
 function relativePath(from, to) {
+	// api.getRelativePath(a, b) actually returns the path from b to a on real
+	// Cavalry, so compute the common case manually and only use the api (with
+	// swapped arguments) as a fallback for paths outside the root.
+	var root = normalisePath(from)
+	var value = normalisePath(to)
+	if (startsWithPath(value, root)) return value.substring(root.length + 1)
 	try {
-		return normalisePath(api.getRelativePath(from, to)).replace(/^\.\//, '')
+		return normalisePath(api.getRelativePath(value, root)).replace(/^\.\//, '')
 	} catch (e) {
-		var root = normalisePath(from)
-		var value = normalisePath(to)
-		if (startsWithPath(value, root)) return value.substring(root.length + 1)
 		return fileNameFromPath(value)
 	}
 }
@@ -168,7 +445,7 @@ function addLayerAndDescendants(layerId, layerSet, errors) {
 		for (var i = 0; i < children.length; i++)
 			addLayerAndDescendants(children[i], layerSet, errors)
 	} catch (e) {
-		errors.push('Could not inspect children of ' + layerId + ': ' + e)
+		errors.push(tr('err.inspectChildren', layerId, e))
 	}
 }
 
@@ -178,24 +455,24 @@ function collectCompositionLayers(scope) {
 	try {
 		originalComp = api.getActiveComp()
 	} catch (e) {
-		result.errors.push('Could not read the active Composition: ' + e)
+		result.errors.push(tr('err.readActiveComp', e))
 	}
 	var selection = []
 	try {
 		selection = stringArray(api.getSelection())
 	} catch (e) {
 		if (scope === 'selected')
-			result.errors.push('Could not read Composition selection: ' + e)
+			result.errors.push(tr('err.readSelection', e))
 	}
 	var allComps = []
 	try {
 		allComps = stringArray(api.getComps())
 	} catch (e) {
-		result.errors.push('Could not enumerate Compositions: ' + e)
+		result.errors.push(tr('err.enumComps', e))
 	}
 	result.allCompIds = allComps
 	if (allComps.length === 0)
-		result.errors.push('No Composition was found in the Scene.')
+		result.errors.push(tr('err.noComps'))
 
 	var layersByComp = {}
 	var referencesByComp = {}
@@ -216,16 +493,16 @@ function collectCompositionLayers(scope) {
 						if (api.getLayerType(layerId) === 'compositionReference') {
 							var referencedComp = api.getCompFromReference(layerId)
 							if (!referencedComp)
-								result.warnings.push('Composition Reference has no local target (possibly an external .cv reference): ' + layerId)
+								result.warnings.push(tr('warn.compRefNoTarget', layerId))
 							else referencesByComp[itemId].push(referencedComp)
 						}
 					} catch (e) {
-						result.errors.push('Could not inspect Composition Reference ' + layerId + ': ' + e)
+						result.errors.push(tr('err.inspectCompRef', layerId, e))
 					}
 				}
 			}
 		} catch (e) {
-			result.errors.push('Could not inspect Composition ' + itemId + ': ' + e)
+			result.errors.push(tr('err.inspectComp', itemId, e))
 		}
 	}
 
@@ -233,14 +510,14 @@ function collectCompositionLayers(scope) {
 		try {
 			api.setActiveComp(originalComp)
 		} catch (e) {
-			result.errors.push('Could not restore the active Composition: ' + e)
+			result.errors.push(tr('err.restoreActiveComp', e))
 		}
 	}
 	if (selection.length > 0) {
 		try {
 			api.select(selection)
 		} catch (e) {
-			result.warnings.push('Could not restore the original selection: ' + e)
+			result.warnings.push(tr('warn.restoreSelection', e))
 		}
 	}
 
@@ -249,10 +526,10 @@ function collectCompositionLayers(scope) {
 		for (var s = 0; s < selection.length; s++)
 			if (containsString(allComps, selection[s])) selectedComps.push(selection[s])
 		if (selectedComps.length > 1)
-			result.errors.push('Select only one Composition in the Assets Window.')
+			result.errors.push(tr('err.selectOneComp'))
 		result.rootCompId = selectedComps.length === 1 ? selectedComps[0] : originalComp
 		if (!containsString(allComps, result.rootCompId))
-			result.errors.push('No valid selected or active Composition was found.')
+			result.errors.push(tr('err.noValidComp'))
 		else {
 			try {
 				result.rootCompName = api.getNiceName(result.rootCompId) || result.rootCompId
@@ -272,7 +549,7 @@ function collectCompositionLayers(scope) {
 				for (var referenceIndex = 0; referenceIndex < references.length; referenceIndex++) {
 					var childComp = references[referenceIndex]
 					if (!containsString(allComps, childComp))
-						result.warnings.push('Referenced Composition is outside this Scene: ' + childComp)
+						result.warnings.push(tr('warn.refCompOutside', childComp))
 					else if (!keepComps[childComp]) {
 						keepComps[childComp] = true
 						changed = true
@@ -302,7 +579,7 @@ function isAssetUsed(assetId, sceneLayers, errors) {
 			if (sceneLayers[extractLayerId(connections[i])]) return true
 		}
 	} catch (e) {
-		errors.push('Could not inspect connections for ' + assetId + ': ' + e)
+		errors.push(tr('err.inspectConnections', assetId, e))
 	}
 	return false
 }
@@ -310,6 +587,17 @@ function isAssetUsed(assetId, sceneLayers, errors) {
 function isReferencePath(path) {
 	var extension = extensionFromPath(path)
 	return extension === '.cv' || extension === '.cvc'
+}
+
+function isSmartFolderType(assetType) {
+	var value = String(assetType || '')
+		.toLowerCase()
+		.replace(/[\s_\-]/g, '')
+	return (
+		value.indexOf('smartfolder') !== -1 ||
+		value === 'imagefolder' ||
+		value === 'audiofolder'
+	)
 }
 
 function typeFolder(assetType, path, categorise) {
@@ -338,7 +626,7 @@ function sequenceInfo(assetId, assetType) {
 		paths = api.getImageSequenceFilePaths(assetId) || []
 	} catch (e) {
 		if (String(assetType || '').toLowerCase().indexOf('sequence') !== -1)
-			error = 'Could not enumerate image-sequence frames: ' + e
+			error = tr('err.enumSeqFrames', e)
 	}
 	var type = String(assetType || '').toLowerCase()
 	return {
@@ -369,13 +657,7 @@ function sequenceGap(paths) {
 	})
 	for (var j = 1; j < numbers.length; j++) {
 		if (numbers[j] !== numbers[j - 1] + 1) {
-			return (
-				'Sequence has a frame-number gap between ' +
-				numbers[j - 1] +
-				' and ' +
-				numbers[j] +
-				'.'
-			)
+			return tr('err.seqGap', numbers[j - 1], numbers[j])
 		}
 	}
 	return ''
@@ -392,7 +674,7 @@ function fileSizeSafe(path) {
 function listSmartFolderFiles(rootPath) {
 	var paths = api.listDirectoryRecursive(rootPath)
 	if (!paths || typeof paths.length !== 'number')
-		throw new Error('Directory traversal returned no file list: ' + rootPath)
+		throw new Error(tr('err.dirTraversal', rootPath))
 	var files = []
 	for (var i = 0; i < paths.length; i++) {
 		if (api.isFile(paths[i])) files.push(canonicalPath(paths[i]))
@@ -425,7 +707,7 @@ function nextUniqueRelative(baseRelative, sourceKey, reservations) {
 			return numbered
 		}
 	}
-	throw new Error('Could not resolve destination collision for ' + candidate)
+	throw new Error(tr('err.destCollision', candidate))
 }
 
 function scanProjectAssets(options) {
@@ -451,20 +733,18 @@ function scanProjectAssets(options) {
 		rawScenePath = api.getSceneFilePath() || ''
 		result.scenePath = canonicalPath(rawScenePath)
 	} catch (e) {
-		result.errors.push('Could not read the current Scene path from Cavalry: ' + e)
+		result.errors.push(tr('err.readScenePath', e))
 		return result
 	}
 	try {
 		result.projectPath = canonicalPath(api.getProjectPath())
 	} catch (e) {}
 	if (!result.scenePath) {
-		result.errors.push(
-			'Cavalry getSceneFilePath() returned an empty path. Reopen the saved .cv Scene and scan again.'
-		)
+		result.errors.push(tr('err.emptyScenePath'))
 		return result
 	}
 	if (result.scenePath === '@project' || result.scenePath.substring(0, 9) === '@project/') {
-		result.errors.push('The Scene path is Project-relative, but Cavalry did not return a Project root: ' + rawScenePath)
+		result.errors.push(tr('err.projectRelativeNoRoot', rawScenePath))
 		return result
 	}
 
@@ -489,7 +769,7 @@ function scanProjectAssets(options) {
 					if (api.isFileAsset(assetId) || api.getAssetType(assetId) !== 'unknown')
 						result.unusedAssetIds.push(assetId)
 				} catch (e) {
-					result.errors.push('Could not classify unused asset ' + assetId + ': ' + e)
+					result.errors.push(tr('err.classifyUnused', assetId, e))
 				}
 			}
 			continue
@@ -503,7 +783,7 @@ function scanProjectAssets(options) {
 		try {
 			isFileAsset = api.isFileAsset(assetId)
 		} catch (e) {
-			result.errors.push('Could not classify asset ' + assetId + ': ' + e)
+			result.errors.push(tr('err.classifyAsset', assetId, e))
 			continue
 		}
 		var assetName = assetId
@@ -513,12 +793,7 @@ function scanProjectAssets(options) {
 
 		if (!isFileAsset) {
 			if (assetType !== 'unknown' && assetType !== '') {
-				result.warnings.push(
-					assetName +
-						' (' +
-						assetType +
-						') is an online or non-file dependency and remains external.'
-				)
+				result.warnings.push(tr('warn.onlineDependency', assetName, assetType))
 			}
 			continue
 		}
@@ -565,19 +840,22 @@ function scanProjectAssets(options) {
 		}
 
 		var lowerType = String(entry.type || '').toLowerCase()
-		if (lowerType.indexOf('font') !== -1) {
+		var isFont = lowerType.indexOf('font') !== -1
+		if (isFont) {
 			entry.kind = 'font'
-			entry.included = false
-			entry.warnings.push(
-				'Font is not copied by default; confirm its licence and install it on the destination system.'
-			)
+			if (!options.includeFonts) {
+				entry.included = false
+				entry.warnings.push(tr('warn.fontNotCopied'))
+				result.warnings.push(entry.name + ': ' + entry.warnings[0])
+				result.entries.push(entry)
+				continue
+			}
+			entry.warnings.push(tr('warn.fontCopied'))
 			result.warnings.push(entry.name + ': ' + entry.warnings[0])
-			result.entries.push(entry)
-			continue
 		}
 
 		if (!entry.sourcePath) {
-			entry.errors.push('Asset has no readable file path.')
+			entry.errors.push(tr('err.noFilePath'))
 			result.errors.push(entry.name + ': ' + entry.errors[0])
 			result.entries.push(entry)
 			continue
@@ -587,16 +865,12 @@ function scanProjectAssets(options) {
 			entry.kind = 'reference'
 			if (!options.includeReferences) {
 				entry.included = false
-				entry.warnings.push(
-					'External Cavalry reference was excluded and will not be portable.'
-				)
+				entry.warnings.push(tr('warn.refExcluded'))
 				result.warnings.push(entry.name + ': ' + entry.warnings[0])
 				result.entries.push(entry)
 				continue
 			}
-			entry.warnings.push(
-				'The reference file is copied, but dependencies inside it are not collected recursively.'
-			)
+			entry.warnings.push(tr('warn.refCopiedShallow'))
 			result.warnings.push(entry.name + ': ' + entry.warnings[0])
 		}
 
@@ -604,25 +878,26 @@ function scanProjectAssets(options) {
 		try {
 			isDirectory = api.isDirectory(entry.sourcePath)
 		} catch (e) {
-			entry.errors.push('Could not inspect source directory: ' + e)
+			entry.errors.push(tr('err.inspectSourceDir', e))
 		}
 		var seq = sequenceInfo(entry.id, entry.type)
 		if (seq.error) entry.errors.push(seq.error)
 
-		if (isDirectory) {
+		if (isDirectory || isSmartFolderType(entry.type)) {
 			entry.kind = 'smartFolder'
 			try {
 				entry.sourceFiles = listSmartFolderFiles(entry.sourcePath)
 			} catch (e) {
-				entry.errors.push('Could not list Smart Folder: ' + e)
+				entry.errors.push(tr('err.listSmartFolder', e))
 			}
 			if (!api.filePathExists(entry.sourcePath)) {
-				entry.errors.push(
-					'Smart Folder is missing: ' + entry.sourcePath
-				)
+				entry.errors.push(tr('err.smartFolderMissing', entry.sourcePath))
 			} else if (entry.sourceFiles.length === 0) {
-				entry.warnings.push('Smart Folder is empty.')
-				result.warnings.push(entry.name + ': Smart Folder is empty.')
+				entry.warnings.push(tr('warn.smartFolderEmpty'))
+				result.warnings.push(entry.name + ': ' + tr('warn.smartFolderEmpty'))
+				// Nothing to copy and replaceAsset cannot target an empty
+				// folder, so leave the entry out of the package.
+				entry.included = false
 			}
 			var smartBase =
 				'Assets/SmartFolders/' + safeName(entry.name, 'SmartFolder')
@@ -639,8 +914,7 @@ function scanProjectAssets(options) {
 				)
 				if (smartRelative.substring(0, 2) === '..') {
 					entry.errors.push(
-						'Smart Folder contains a path outside its root: ' +
-							entry.sourceFiles[sf]
+						tr('err.smartFolderOutside', entry.sourceFiles[sf])
 					)
 					continue
 				}
@@ -652,6 +926,24 @@ function scanProjectAssets(options) {
 					),
 				})
 			}
+			// api.replaceAsset() cannot retarget a Smart Folder asset at a
+			// directory — it silently keeps the old path. It must be given a
+			// file inside the new folder (verified on Cavalry 2.x). Prefer a
+			// top-level file so the folder root does not shift into a subfolder.
+			var relinkFile = ''
+			for (var rf = 0; rf < entry.mappings.length; rf++) {
+				var mappingRel = relativePath(
+					entry.destinationRelative,
+					entry.mappings[rf].destinationRelative
+				)
+				if (mappingRel.indexOf('/') === -1) {
+					relinkFile = entry.mappings[rf].destinationRelative
+					break
+				}
+			}
+			if (!relinkFile && entry.mappings.length > 0)
+				relinkFile = entry.mappings[0].destinationRelative
+			if (relinkFile) entry.relinkRelative = relinkFile
 		} else if (seq.isSequence) {
 			entry.kind = 'sequence'
 			entry.sourceFiles = seq.paths
@@ -693,11 +985,13 @@ function scanProjectAssets(options) {
 			var folder =
 				entry.kind === 'reference'
 					? 'References'
-					: typeFolder(
-							entry.type,
-							entry.sourcePath,
-							options.categorise
-						)
+					: isFont
+						? 'Fonts'
+						: typeFolder(
+								entry.type,
+								entry.sourcePath,
+								options.categorise
+							)
 			var regularBase =
 				'Assets' +
 				(folder ? '/' + folder : '') +
@@ -725,7 +1019,7 @@ function scanProjectAssets(options) {
 		for (var m = 0; m < entry.mappings.length; m++) {
 			var source = entry.mappings[m].source
 			if (!api.filePathExists(source)) {
-				entry.errors.push('Missing source file: ' + source)
+				entry.errors.push(tr('err.missingSource', source))
 			} else {
 				entry.sizeKB += fileSizeSafe(source)
 			}
@@ -828,56 +1122,56 @@ function restoreOriginalScene(state) {
 	try {
 		api.openScene(state.originalScenePath, true)
 	} catch (e) {
-		errors.push('Could not reopen original Scene: ' + e)
+		errors.push(tr('err.reopenOriginal', e))
 	}
 	try {
 		if (canonicalPath(api.getSceneFilePath()) !== canonicalPath(state.originalScenePath))
-			errors.push('The active Scene is not the original Scene.')
+			errors.push(tr('err.notOriginalScene'))
 	} catch (e) {
-		errors.push('Could not verify the original Scene: ' + e)
+		errors.push(tr('err.verifyOriginalScene', e))
 	}
 	try {
 		if (state.originalProjectPath) api.setProject(state.originalProjectPath)
 		else api.clearProject()
 	} catch (e) {
-		errors.push('Could not restore original Project: ' + e)
+		errors.push(tr('err.restoreProject', e))
 	}
 	try {
 		if (canonicalPath(api.getProjectPath()) !== canonicalPath(state.originalProjectPath))
-			errors.push('The active Project is not the original Project.')
+			errors.push(tr('err.notOriginalProject'))
 	} catch (e) {
-		errors.push('Could not verify the original Project: ' + e)
+		errors.push(tr('err.verifyOriginalProject', e))
 	}
 	try {
 		var restoredComps = stringArray(api.getComps())
 		if (restoredComps.length !== state.originalCompIds.length)
-			errors.push('The original Composition count was not restored.')
+			errors.push(tr('err.compCountRestored'))
 		for (var compIndex = 0; compIndex < state.originalCompIds.length; compIndex++)
 			if (!containsString(restoredComps, state.originalCompIds[compIndex]))
-				errors.push('Original Composition was not restored: ' + state.originalCompIds[compIndex])
+				errors.push(tr('err.compRestored', state.originalCompIds[compIndex]))
 		var restoredAssets = stringArray(api.getAssetWindowLayers(false))
 		if (restoredAssets.length !== state.originalAssetIds.length)
-			errors.push('The original Assets Window contents were not restored.')
+			errors.push(tr('err.assetsRestored'))
 		for (var assetIndex = 0; assetIndex < state.originalAssetIds.length; assetIndex++)
 			if (!containsString(restoredAssets, state.originalAssetIds[assetIndex]))
-				errors.push('Original Asset was not restored: ' + state.originalAssetIds[assetIndex])
+				errors.push(tr('err.assetRestored', state.originalAssetIds[assetIndex]))
 	} catch (e) {
-		errors.push('Could not verify original Scene contents: ' + e)
+		errors.push(tr('err.verifySceneContents', e))
 	}
 	if (state.originalComp) {
 		try {
 			api.setActiveComp(state.originalComp)
 		} catch (e) {
-			errors.push('Could not restore the original active Composition: ' + e)
+			errors.push(tr('err.restoreActiveComp2', e))
 		}
 	}
 	for (var i = 0; i < state.originalAssetPaths.length; i++) {
 		var asset = state.originalAssetPaths[i]
 		try {
 			if (canonicalPath(api.getAssetFilePath(asset.id)) !== canonicalPath(asset.path))
-				errors.push('Original asset path was not restored: ' + asset.id)
+				errors.push(tr('err.assetPathRestored', asset.id))
 		} catch (e) {
-			errors.push('Could not verify original asset ' + asset.id + ': ' + e)
+			errors.push(tr('err.verifyAsset', asset.id, e))
 		}
 	}
 	return errors
@@ -886,27 +1180,27 @@ function restoreOriginalScene(state) {
 function prunePackagedScene(scan, state) {
 	if (scan.scope !== 'selected') return
 	if (canonicalPath(api.getSceneFilePath()) !== canonicalPath(state.packageScenePath))
-		throw new Error('Refusing to remove unrelated Compositions before switching to the packaged Scene.')
+		throw new Error(tr('err.pruneSafety'))
 	api.setActiveComp(scan.rootCompId)
 	for (var i = 0; i < scan.allCompIds.length; i++) {
 		var compId = scan.allCompIds[i]
 		if (containsString(scan.compIds, compId)) continue
 		api.deleteLayer(compId)
 		if (api.layerExists(compId))
-			throw new Error('Could not remove unrelated Composition: ' + compId)
+			throw new Error(tr('err.pruneComp', compId))
 	}
 	for (var j = 0; j < scan.unusedAssetIds.length; j++) {
 		var assetId = scan.unusedAssetIds[j]
 		api.deleteLayer(assetId)
 		if (api.layerExists(assetId))
-			throw new Error('Could not remove unrelated asset: ' + assetId)
+			throw new Error(tr('err.pruneAsset', assetId))
 	}
 	for (var k = 0; k < scan.compIds.length; k++)
 		if (!api.layerExists(scan.compIds[k]))
-			throw new Error('A required Composition was removed: ' + scan.compIds[k])
+			throw new Error(tr('err.pruneKept', scan.compIds[k]))
 	api.setActiveComp(scan.rootCompId)
 	if (!api.saveScene())
-		throw new Error('Could not save the selected-Composition Scene after pruning.')
+		throw new Error(tr('err.savePruned'))
 }
 
 function validatePackage(scan, state) {
@@ -914,7 +1208,7 @@ function validatePackage(scan, state) {
 	try {
 		api.openScene(state.packageScenePath, true)
 	} catch (e) {
-		errors.push('Could not reopen packaged Scene: ' + e)
+		errors.push(tr('err.reopenPackaged', e))
 		return errors
 	}
 
@@ -927,40 +1221,40 @@ function validatePackage(scan, state) {
 		currentProject = canonicalPath(api.getProjectPath())
 	} catch (e) {}
 	if (currentScene !== canonicalPath(state.packageScenePath))
-		errors.push('Packaged Scene did not reopen from the expected path.')
+		errors.push(tr('err.packagedScenePath'))
 	if (currentProject !== canonicalPath(state.packageRoot))
-		errors.push('Packaged Scene did not activate the new Project root.')
+		errors.push(tr('err.packagedProjectRoot'))
 
 	var pathToProject = joinPath(
 		joinPath(state.packageRoot, 'Scenes'),
 		'path-to-project'
 	)
 	if (!api.filePathExists(pathToProject))
-		errors.push('Scenes/path-to-project was not created.')
+		errors.push(tr('err.markerMissing'))
 	else {
 		try {
 			var projectMarker = String(api.readFromFile(pathToProject)).replace(/^\s+|\s+$/g, '')
 			if (projectMarker !== '..')
-				errors.push('Scenes/path-to-project does not point to the package root.')
+				errors.push(tr('err.markerWrong'))
 		} catch (e) {
-			errors.push('Could not verify Scenes/path-to-project: ' + e)
+			errors.push(tr('err.markerVerify', e))
 		}
 	}
 	if (scan.scope === 'selected') {
 		try {
 			var packagedComps = stringArray(api.getComps())
 			if (packagedComps.length !== scan.compIds.length)
-				errors.push('The packaged Scene contains unexpected Compositions.')
+				errors.push(tr('err.unexpectedComps'))
 			for (var compIndex = 0; compIndex < scan.compIds.length; compIndex++)
 				if (!containsString(packagedComps, scan.compIds[compIndex]))
-					errors.push('Required Composition is missing: ' + scan.compIds[compIndex])
+					errors.push(tr('err.compMissing', scan.compIds[compIndex]))
 			for (var unusedIndex = 0; unusedIndex < scan.unusedAssetIds.length; unusedIndex++)
 				if (api.layerExists(scan.unusedAssetIds[unusedIndex]))
-					errors.push('Unrelated asset remains in packaged Scene: ' + scan.unusedAssetIds[unusedIndex])
+					errors.push(tr('err.unrelatedAssetRemains', scan.unusedAssetIds[unusedIndex]))
 			if (api.getActiveComp() !== scan.rootCompId)
 				api.setActiveComp(scan.rootCompId)
 		} catch (e) {
-			errors.push('Could not verify packaged Compositions: ' + e)
+			errors.push(tr('err.verifyPackagedComps', e))
 		}
 	}
 
@@ -972,11 +1266,9 @@ function validatePackage(scan, state) {
 			resolved = canonicalPath(api.getAssetFilePath(entry.id))
 		} catch (e) {}
 		if (!resolved || !startsWithPath(resolved, state.packageRoot)) {
-			errors.push(
-				entry.name + ' resolves outside the package after reopening.'
-			)
+			errors.push(tr('err.resolvesOutside', entry.name))
 		} else if (!api.filePathExists(resolved)) {
-			errors.push(entry.name + ' resolves to a missing packaged path.')
+			errors.push(tr('err.resolvesMissing', entry.name))
 		}
 	}
 	return errors
@@ -1022,7 +1314,7 @@ function executePackage(scan, parentFolder, requestedName, options) {
 	try {
 		state.originalAssetIds = stringArray(api.getAssetWindowLayers(false))
 	} catch (e) {
-		return { ok: false, message: 'Could not record original Assets Window state. Nothing was changed: ' + e }
+		return { ok: false, message: tr('err.recordState', e) }
 	}
 	for (var originalIndex = 0; originalIndex < scan.entries.length; originalIndex++) {
 		var originalEntry = scan.entries[originalIndex]
@@ -1035,23 +1327,13 @@ function executePackage(scan, parentFolder, requestedName, options) {
 		!api.filePathExists(parentFolder) ||
 		!api.isDirectory(parentFolder)
 	) {
-		return { ok: false, message: 'Choose an existing destination folder.' }
+		return { ok: false, message: tr('err.noDestination') }
 	}
 	if (api.filePathExists(packageRoot)) {
-		return {
-			ok: false,
-			message:
-				'The package folder already exists. Choose a new name or destination.',
-		}
+		return { ok: false, message: tr('err.packageExists') }
 	}
 	if (scan.errors.length > 0) {
-		return {
-			ok: false,
-			message:
-				'Packaging is blocked by ' +
-				scan.errors.length +
-				' scan error(s).',
-		}
+		return { ok: false, message: tr('err.blockedByScan', scan.errors.length) }
 	}
 
 	var saved = false
@@ -1061,16 +1343,13 @@ function executePackage(scan, parentFolder, requestedName, options) {
 		saved = false
 	}
 	if (!saved)
-		return {
-			ok: false,
-			message: 'Could not save the original Scene. Nothing was changed.',
-		}
+		return { ok: false, message: tr('err.saveOriginal') }
 
 	var transactionErrors = []
 	var relinkStarted = false
 	try {
 		if (!ensureFolder(packageRoot))
-			throw new Error('Could not create package root.')
+			throw new Error(tr('err.createRoot'))
 		var requiredFolders = [
 			'Assets',
 			'Assets/Images',
@@ -1079,6 +1358,7 @@ function executePackage(scan, parentFolder, requestedName, options) {
 			'Assets/Data',
 			'Assets/Sequences',
 			'Assets/SmartFolders',
+			'Assets/Fonts',
 			'Assets/References',
 			'Scenes',
 			'Renders',
@@ -1086,7 +1366,7 @@ function executePackage(scan, parentFolder, requestedName, options) {
 		]
 		for (var d = 0; d < requiredFolders.length; d++) {
 			if (!ensureFolder(joinPath(packageRoot, requiredFolders[d])))
-				throw new Error('Could not create ' + requiredFolders[d] + '.')
+				throw new Error(tr('err.createFolder', requiredFolders[d]))
 		}
 
 		if (
@@ -1096,7 +1376,7 @@ function executePackage(scan, parentFolder, requestedName, options) {
 				false
 			)
 		) {
-			throw new Error('Could not write projectDescription.json.')
+			throw new Error(tr('err.writeDescription'))
 		}
 
 		var copiedDestinations = {}
@@ -1108,8 +1388,7 @@ function executePackage(scan, parentFolder, requestedName, options) {
 				!ensureFolder(joinPath(packageRoot, entry.destinationRelative))
 			) {
 				throw new Error(
-					'Could not create Smart Folder destination: ' +
-						entry.destinationRelative
+					tr('err.createSmartDest', entry.destinationRelative)
 				)
 			}
 			for (var m = 0; m < entry.mappings.length; m++) {
@@ -1121,15 +1400,13 @@ function executePackage(scan, parentFolder, requestedName, options) {
 				var destinationKey = pathKey(destination)
 				if (copiedDestinations[destinationKey]) continue
 				if (!copyAndVerify(mapping.source, destination))
-					throw new Error(
-						'Copy or verification failed: ' + mapping.source
-					)
+					throw new Error(tr('err.copyFailed', mapping.source))
 				copiedDestinations[destinationKey] = true
 			}
 		}
 
 		if (!writeReport(scan, state, 'copied', []))
-			throw new Error('Could not write package-report.json before relinking.')
+			throw new Error(tr('err.writeEarlyReport'))
 
 		api.setProject(packageRoot)
 		var activeProject = ''
@@ -1137,12 +1414,16 @@ function executePackage(scan, parentFolder, requestedName, options) {
 			activeProject = canonicalPath(api.getProjectPath())
 		} catch (e) {}
 		if (activeProject !== canonicalPath(packageRoot))
-			throw new Error('Cavalry did not activate the new Project root.')
+			throw new Error(tr('err.activateProject'))
 
 		relinkStarted = true
 		for (var r = 0; r < scan.entries.length; r++) {
 			var relinkEntry = scan.entries[r]
 			if (!relinkEntry.included || relinkEntry.errors.length > 0) continue
+			// Absolute path inside the package: Cavalry re-serialises it as
+			// project-relative (@project/...) when the Scene is saved, which
+			// keeps the package portable. Passing '@project/...' directly to
+			// replaceAsset does NOT work (verified on Cavalry 2.x).
 			api.replaceAsset(
 				relinkEntry.id,
 				joinPath(packageRoot, relinkEntry.relinkRelative)
@@ -1151,22 +1432,20 @@ function executePackage(scan, parentFolder, requestedName, options) {
 
 		var saveAsResult = api.saveSceneAs(state.packageScenePath)
 		if (!saveAsResult || !api.filePathExists(state.packageScenePath))
-			throw new Error('Could not save the packaged Scene.')
+			throw new Error(tr('err.savePackaged'))
 		if (canonicalPath(api.getSceneFilePath()) !== canonicalPath(state.packageScenePath))
-			throw new Error('Save As did not switch to the packaged Scene.')
+			throw new Error(tr('err.saveAsSwitch'))
 		prunePackagedScene(scan, state)
 
 		var validationErrors = validatePackage(scan, state)
 		if (validationErrors.length > 0) {
 			for (var ve = 0; ve < validationErrors.length; ve++)
 				transactionErrors.push(validationErrors[ve])
-			throw new Error(
-				'Package validation failed. See package-report.json.'
-			)
+			throw new Error(tr('err.validationFailed'))
 		}
 
 		if (!writeReport(scan, state, 'success', []))
-			throw new Error('Could not write the final package-report.json.')
+			throw new Error(tr('err.writeFinalReport'))
 		if (options.openFolder) {
 			try {
 				api.openURL(pathToFileUrl(packageRoot))
@@ -1177,12 +1456,11 @@ function executePackage(scan, parentFolder, requestedName, options) {
 			packageRoot: packageRoot,
 			packageScenePath: state.packageScenePath,
 			packageName: cleanName,
-			message:
-				'Packaged ' +
-				scan.entries.length +
-				' dependency record(s), ' +
-				formatSize(scan.totalSizeKB) +
-				'.',
+			message: tr(
+				'msg.packaged',
+				scan.entries.length,
+				formatSize(scan.totalSizeKB)
+			),
 		}
 	} catch (error) {
 		transactionErrors.push(String(error))
@@ -1194,13 +1472,13 @@ function executePackage(scan, parentFolder, requestedName, options) {
 					api.setProject(state.originalProjectPath)
 				else api.clearProject()
 			} catch (restoreError) {
-				restoreErrors.push('Could not restore original Project: ' + restoreError)
+				restoreErrors.push(tr('err.restoreProject', restoreError))
 			}
 			try {
 				if (canonicalPath(api.getProjectPath()) !== canonicalPath(state.originalProjectPath))
-					restoreErrors.push('The original Project was not restored.')
+					restoreErrors.push(tr('err.notOriginalProject'))
 			} catch (verifyError) {
-				restoreErrors.push('Could not verify original Project: ' + verifyError)
+				restoreErrors.push(tr('err.verifyOriginalProject', verifyError))
 			}
 		}
 		transactionErrors = transactionErrors.concat(restoreErrors)
@@ -1209,12 +1487,11 @@ function executePackage(scan, parentFolder, requestedName, options) {
 			ok: false,
 			packageRoot: packageRoot,
 			message:
-				'Packaging failed: ' +
-				error +
+				tr('msg.failed', error) +
 				(restoreErrors.length > 0
-					? ' WARNING: original Scene or Project restoration could not be verified: ' + restoreErrors.join(' | ') + '. Reopen the original Scene manually: ' + state.originalScenePath + '.'
-					: ' The original Scene and Project were restored.') +
-				(reportWritten ? ' The failed package was kept for diagnosis.' : ' WARNING: package-report.json could not be written.'),
+					? tr('msg.restoreUnverified', restoreErrors.join(' | '), state.originalScenePath)
+					: tr('msg.restored')) +
+				(reportWritten ? tr('msg.failedKept') : tr('msg.reportUnwritten')),
 		}
 	}
 }
@@ -1222,6 +1499,12 @@ function executePackage(scan, parentFolder, requestedName, options) {
 // =============================================================================
 // UI
 // =============================================================================
+
+function setWidgetText(widget, text) {
+	try {
+		if (widget && typeof widget.setText === 'function') widget.setText(text)
+	} catch (e) {}
+}
 
 var defaultScenePath = ''
 try {
@@ -1236,9 +1519,7 @@ try {
 
 var destinationPicker = new ui.FilePath()
 destinationPicker.setMode('OpenDirectory')
-destinationPicker.setPlaceholder(
-	'Choose the folder that will contain the package'
-)
+destinationPicker.setPlaceholder(tr('ui.destinationPlaceholder'))
 if (defaultParent) {
 	destinationPicker.setOpenLocation(defaultParent)
 	destinationPicker.setFilePath(defaultParent)
@@ -1251,12 +1532,15 @@ packageNameInput.setText(
 
 var categoriseCheckbox = new ui.Checkbox(true)
 var includeReferencesCheckbox = new ui.Checkbox(true)
+var includeFontsCheckbox = new ui.Checkbox(false)
 var openFolderCheckbox = new ui.Checkbox(true)
 var selectedCompCheckbox = new ui.Checkbox(false)
 
-var scanButton = new ui.Button('Scan Used Assets')
-var packageButton = new ui.Button('Package Project')
-var statusLabel = new ui.Label('Ready')
+var scanButton = new ui.Button(tr('ui.scan'))
+var packageButton = new ui.Button(tr('ui.package'))
+var languageButton = new ui.Button(tr('ui.language'))
+languageButton.setToolTip(tr('ui.languageTip'))
+var statusLabel = new ui.Label(tr('ui.ready'))
 statusLabel.setTextColor(ui.getThemeColor('Light'))
 
 var previewScroll = new ui.ScrollView()
@@ -1271,6 +1555,7 @@ function optionValues() {
 		scope: selectedCompCheckbox.getValue() ? 'selected' : 'all',
 		categorise: categoriseCheckbox.getValue(),
 		includeReferences: includeReferencesCheckbox.getValue(),
+		includeFonts: includeFontsCheckbox.getValue(),
 		openFolder: openFolderCheckbox.getValue(),
 	}
 }
@@ -1284,7 +1569,7 @@ function resetPreview() {
 function displayScan(scan) {
 	resetPreview()
 	for (var errorIndex = 0; errorIndex < scan.errors.length; errorIndex++) {
-		var errorLabel = new ui.Label('BLOCKING: ' + scan.errors[errorIndex])
+		var errorLabel = new ui.Label(tr('ui.blocking', scan.errors[errorIndex]))
 		errorLabel.setTextColor('#ff6666')
 		errorLabel.setToolTip(scan.errors[errorIndex])
 		previewRows.add(errorLabel)
@@ -1322,11 +1607,9 @@ function displayScan(scan) {
 		row.add(nameLabel)
 		row.addStretch()
 		var detail = new ui.Label(
-			entry.kind +
+			tr('kind.' + entry.kind) +
 				' · ' +
-				entry.mappings.length +
-				' file' +
-				(entry.mappings.length === 1 ? '' : 's') +
+				tr('ui.files', entry.mappings.length) +
 				' · ' +
 				formatSize(entry.sizeKB)
 		)
@@ -1341,27 +1624,21 @@ function displayScan(scan) {
 		if (scan.entries[j].included) includedCount++
 	var summary =
 		(scan.scope === 'selected'
-			? 'Selected: ' + (scan.rootCompName || '?') + ' + ' + Math.max(0, scan.compIds.length - 1) + ' nested Pre-Comp(s) · '
-			: 'All Compositions · ') +
-		includedCount +
-		' used file asset' +
-		(includedCount === 1 ? '' : 's') +
-		', ' +
-		formatSize(scan.totalSizeKB)
+			? tr(
+					'ui.summarySelected',
+					scan.rootCompName || '?',
+					Math.max(0, scan.compIds.length - 1)
+				)
+			: tr('ui.summaryAll')) +
+		tr('ui.summaryAssets', includedCount, formatSize(scan.totalSizeKB))
 	if (scan.errors.length > 0)
-		summary +=
-			' · ' +
-			scan.errors.length +
-			' blocking error' +
-			(scan.errors.length === 1 ? '' : 's')
+		summary += tr('ui.summaryErrors', scan.errors.length)
 	if (scan.warnings.length > 0)
-		summary +=
-			' · ' +
-			scan.warnings.length +
-			' warning' +
-			(scan.warnings.length === 1 ? '' : 's')
+		summary += tr('ui.summaryWarnings', scan.warnings.length)
 	statusLabel.setText(
-		scan.errors.length > 0 ? 'Cannot package: ' + scan.errors[0] : summary
+		scan.errors.length > 0
+			? tr('ui.cannotPackage', scan.errors[0])
+			: summary
 	)
 	statusLabel.setToolTip(scan.errors.concat(scan.warnings).join('\n'))
 	statusLabel.setTextColor(
@@ -1374,7 +1651,7 @@ function displayScan(scan) {
 }
 
 function runScan() {
-	statusLabel.setText('Scanning Compositions and dependencies...')
+	statusLabel.setText(tr('ui.scanning'))
 	statusLabel.setTextColor(ui.getThemeColor('Light'))
 	try {
 		lastScan = scanProjectAssets(optionValues())
@@ -1382,7 +1659,7 @@ function runScan() {
 	} catch (error) {
 		lastScan = null
 		resetPreview()
-		statusLabel.setText('Scan failed: ' + error)
+		statusLabel.setText(tr('ui.scanFailed', error))
 		statusLabel.setTextColor('#ff6666')
 		console.log(SCRIPT_NAME + ' scan failed: ' + error)
 	}
@@ -1397,6 +1674,9 @@ categoriseCheckbox.onValueChanged = function () {
 includeReferencesCheckbox.onValueChanged = function () {
 	runScan()
 }
+includeFontsCheckbox.onValueChanged = function () {
+	runScan()
+}
 selectedCompCheckbox.onValueChanged = function () {
 	runScan()
 }
@@ -1405,13 +1685,13 @@ packageButton.onClick = function () {
 	runScan()
 	if (!lastScan) return
 	if (lastScan.errors.length > 0) {
-		statusLabel.setText('Fix the blocking scan errors before packaging.')
+		statusLabel.setText(tr('ui.fixErrors'))
 		statusLabel.setTextColor('#ff6666')
 		return
 	}
 	var destination = canonicalPath(destinationPicker.getFilePath())
 	var packageName = packageNameInput.getText()
-	statusLabel.setText('Copying and verifying assets...')
+	statusLabel.setText(tr('ui.copying'))
 	statusLabel.setTextColor(ui.getThemeColor('Light'))
 	var outcome = executePackage(
 		lastScan,
@@ -1432,47 +1712,65 @@ var mainLayout = new ui.VLayout()
 mainLayout.setMargins(4, 4, 4, 4)
 mainLayout.setSpaceBetween(7)
 
-var destinationLabel = new ui.Label('Destination parent folder')
+var headerRow = new ui.HLayout()
+headerRow.addStretch()
+headerRow.add(languageButton)
+mainLayout.add(headerRow)
+
+var destinationLabel = new ui.Label(tr('ui.destination'))
 destinationLabel.setTextColor(ui.getThemeColor('Light'))
 mainLayout.add(destinationLabel)
 mainLayout.add(destinationPicker)
 
-var packageNameLabel = new ui.Label('Package name')
+var packageNameLabel = new ui.Label(tr('ui.packageName'))
 packageNameLabel.setTextColor(ui.getThemeColor('Light'))
 mainLayout.add(packageNameLabel)
 mainLayout.add(packageNameInput)
 
-function optionRow(checkbox, text) {
+var localisedLabels = []
+
+function optionRow(checkbox, key, tipKey) {
 	var row = new ui.HLayout()
+	row.setSpaceBetween(6)
 	row.add(checkbox)
-	var label = new ui.Label(text)
+	var label = new ui.Label(tr(key))
 	label.setTextColor(ui.getThemeColor('Light'))
+	if (tipKey) label.setToolTip(tr(tipKey))
 	row.add(label)
 	row.addStretch()
+	localisedLabels.push({ widget: label, key: key, tipKey: tipKey || '' })
 	return row
 }
 
-mainLayout.add(
-	optionRow(
-		selectedCompCheckbox,
-		'Only selected Composition (or active Composition) and nested Pre-Comps'
-	)
+var optionsColumns = new ui.HLayout()
+optionsColumns.setSpaceBetween(32)
+var optionsColLeft = new ui.VLayout()
+optionsColLeft.setSpaceBetween(6)
+var optionsColRight = new ui.VLayout()
+optionsColRight.setSpaceBetween(6)
+optionsColLeft.add(
+	optionRow(selectedCompCheckbox, 'ui.scopeSelected', 'ui.scopeSelectedTip')
 )
-mainLayout.add(
-	optionRow(categoriseCheckbox, 'Categorise regular assets by type')
-)
-mainLayout.add(
+optionsColLeft.add(
 	optionRow(
 		includeReferencesCheckbox,
-		'Copy external .cv/.cvc references (nested dependencies are reported only)'
+		'ui.includeReferences',
+		'ui.includeReferencesTip'
 	)
 )
-mainLayout.add(
-	optionRow(openFolderCheckbox, 'Open package folder when complete')
+optionsColLeft.add(optionRow(openFolderCheckbox, 'ui.openFolder'))
+optionsColRight.add(optionRow(categoriseCheckbox, 'ui.categorise'))
+optionsColRight.add(
+	optionRow(includeFontsCheckbox, 'ui.includeFonts', 'ui.includeFontsTip')
 )
+optionsColumns.add(optionsColLeft)
+optionsColumns.add(optionsColRight)
+optionsColumns.addStretch()
+mainLayout.add(optionsColumns)
 
+var previewTitleLabel = new ui.Label(tr('ui.usedDependencies'))
 var previewHeader = new ui.HLayout()
-previewHeader.add(new ui.Label('Used dependencies'))
+previewHeader.add(previewTitleLabel)
 previewHeader.addStretch()
 previewHeader.add(scanButton)
 mainLayout.add(previewHeader)
@@ -1480,10 +1778,37 @@ mainLayout.add(previewScroll)
 mainLayout.add(statusLabel)
 mainLayout.add(packageButton)
 
+function applyLanguage() {
+	ui.setTitle(tr('ui.title'))
+	destinationLabel.setText(tr('ui.destination'))
+	destinationPicker.setPlaceholder(tr('ui.destinationPlaceholder'))
+	packageNameLabel.setText(tr('ui.packageName'))
+	for (var i = 0; i < localisedLabels.length; i++) {
+		localisedLabels[i].widget.setText(tr(localisedLabels[i].key))
+		if (localisedLabels[i].tipKey)
+			localisedLabels[i].widget.setToolTip(tr(localisedLabels[i].tipKey))
+	}
+	previewTitleLabel.setText(tr('ui.usedDependencies'))
+	setWidgetText(scanButton, tr('ui.scan'))
+	setWidgetText(packageButton, tr('ui.package'))
+	setWidgetText(languageButton, tr('ui.language'))
+	languageButton.setToolTip(tr('ui.languageTip'))
+	if (lastScan) runScan()
+	else {
+		statusLabel.setText(tr('ui.ready'))
+		statusLabel.setTextColor(ui.getThemeColor('Light'))
+	}
+}
+
+languageButton.onClick = function () {
+	setLanguage(currentLanguage === 'en' ? 'zh' : 'en')
+}
+
 ui.add(mainLayout)
 ui.setBackgroundColor(ui.getThemeColor('Base'))
 ui.setMinimumWidth(620)
 ui.setMinimumHeight(540)
 ui.show()
 
+applyLanguage()
 runScan()
