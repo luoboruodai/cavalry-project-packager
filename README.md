@@ -10,6 +10,8 @@
 
 当前版本：**0.1.1**
 
+本版本更新记录见 [CHANGELOG.md](CHANGELOG.md)。
+
 ### 功能特性
 
 - **自动收集已使用素材**：只打包被合成实际引用的文件素材，未使用的素材不会混入包内
@@ -88,6 +90,8 @@ node --test tests/project-packager.test.cjs
 A single-file UI Script for [Cavalry](https://cavalry.studio/) that collects the file assets **actually used** by your Compositions — images, footage, audio, image sequences, **Smart Folders**, external `.cv/.cvc` references and (optionally) fonts — copies them into a new portable Project, relinks everything, and saves a copy of the Scene inside the package. Recipients just open the packaged Scene: **no offline media**. The interface is bilingual (English / 中文) — use the **中文 / EN** button in the top-right corner.
 
 Current version: **0.1.1**
+
+See [CHANGELOG.md](CHANGELOG.md) for the bilingual 0.1.1 release notes.
 
 ### Features
 
