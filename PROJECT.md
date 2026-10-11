@@ -1,7 +1,7 @@
 # PROJECT.md — Cavalry Project Packager 项目与开发过程汇总
 
 > 本文档面向后续接手的 AI 智能体/开发者：读完本文即可理解项目结构、关键决策、已踩过的坑，无需重新考古对话历史。
-> 汇总日期：2026-10-09。对应发布版本：v0.1.0。
+> 汇总日期：2026-10-12。对应发布版本：v0.1.1。
 
 ## 1. 项目是什么
 
@@ -36,14 +36,14 @@ node --test tests/project-packager.test.cjs     # 全部测试（16 个用例）
 文档写 "Computes the relative path from one location to another"，实测：`getRelativePath(root, root+'/nested/f.png')` 返回 `'../..'`，反向调用返回 `'nested/f.png'`。**与直觉/文档参数顺序相反**，且**不抛异常**（try/catch 兜不住）。上游原版 Smart Folder 打包因此必然全部报"路径在根目录之外"而失败——该功能在上游从未真正工作过。
 → 修复：`relativePath()` 先手动用 `startsWithPath` 计算，仅包外路径才 fallback 到参数对调后的 api 调用。测试 mock 已按真实行为实现。
 
-### 4.2 `api.replaceAsset` 不接受 `@project/...` 令牌路径，也不接受目录路径 ⚠️
+### 4.2 `api.replaceAsset` 不接受 `@project/...` 令牌路径，也不接受 Smart Folder 目录路径 ⚠️
 - 传 `'@project/Assets/...'`：**静默忽略**，素材保持原路径 → 校验失败回滚。
 - 传目录路径（Smart Folder 重链）：**同样静默忽略**。
-- 正确做法：重链一律用**包内绝对路径**；Cavalry 在 `saveSceneAs` 时会自动把包内路径序列化为 `@assets/...` 工程相对路径，便携性由 Cavalry 自己保证。
-- Smart Folder 重链必须传**文件夹内某个文件**的路径（实测传 `<dir>/cover.jpg` 成功）。插件选**顶层文件**（避免 folder root 漂移到子目录）；无顶层文件时退化为第一个文件。
+- 普通文件和序列仍使用**包内绝对路径**交给 `replaceAsset()`；Cavalry 在 `saveSceneAs` 时会把包内路径序列化为 `@assets/...` 工程相对路径。
+- Smart Folder 不能再通过 `replaceAsset()` 指向子文件。0.1.1 使用 `loadSmartFolderAsset()` 重建包内文件夹资产，再把旧资产的全部输出连接重新接到新资产。
 
 ### 4.3 Cavalry 2.x 的 Smart Folder 素材类型是 `imageFolder` / `audioFolder` ⚠️
-不是 `imageSmartFolder`。检测逻辑：`isDirectory(路径)` 或 `isSmartFolderType(type)`（匹配 `smartfolder` 子串或精确 `imagefolder`/`audiofolder`）。空的 Smart Folder 无法重链（replaceAsset 无解）→ 直接 `included=false` + 警告。
+不是 `imageSmartFolder`。检测逻辑：`isDirectory(路径)` 或 `isSmartFolderType(type)`（匹配 `smartfolder` 子串或精确 `imagefolder`/`audiofolder`）。空的 Smart Folder 无法重建包内资产 → 直接 `included=false` + 警告。
 
 ### 4.4 手搓 `.cv` 场景的注意事项
 `.cv` 是 JSON（`resourceType: cavalry.scenefile`）。结构：`nodes`（图层/素材节点）+ `nodeMeta`（父子层级：compNode 的 children 即合成图层；Assets 窗口分组也是 `nodeType:'asset'` 的节点）+ `connections`（`{from:'a.id', to:'b.attr'}`）+ `assets`（`{nodeId, type:'file', data:{filePath, assetType?}}`）。
@@ -89,7 +89,33 @@ Cavalry 没有脚本控制台，UI 脚本按钮又是 Qt 无 AX 暴露。验证�
 - `package-report.json` 含本机绝对路径，分享前提示用户检查。
 - 未做：打包后自动压缩 ZIP；多 Scene 打包；增量打包。
 
-## 8. 仓库卫生
+## 8. 0.1.1 修复记录
+
+### 8.1 Smart Folder 根资源重建
+
+真实 Cavalry 工程中，`Asset from Smart Folder` 的输出连接可能全部来自一个 `imageFolder` 资产。如果打包时只把 Smart Folder 重链到其中一个子文件，打包工程会出现“所有图片都是图片1”的问题。
+
+0.1.1 不再使用 `replaceAsset()` 把 Smart Folder 指向单个文件。复制完成后，插件调用 `api.loadSmartFolderAsset()` 创建包内文件夹资产，读取旧资产的全部输出连接，重新连接到新资产，再移除旧的包内资产。普通文件、序列和 Smart Folder 使用不同的重链路径。
+
+### 8.2 跨平台与相对路径
+
+- 统一处理 `/` 与 `\\`，并折叠真实文件系统路径中的 `.` / `..` 段。
+- 包内显式创建 `Scenes/path-to-project`，内容为 `..`。
+- 普通素材仍通过包内绝对路径交给 Cavalry 的 `replaceAsset()`，由 Cavalry 保存时序列化为 `@assets/...`；Smart Folder 使用包内文件夹资产重建。
+- 保存后读取 `.cv` JSON，若已打包资产仍保留 Windows 盘符、Unix 绝对路径或 UNC 路径，则校验失败并回滚。
+
+### 8.3 打包副本清理
+
+新增“清理打包素材 / Clean package Assets”选项。扫描阶段记录所有未使用的文件资产；打包成功后，仅在包内 Scene 中删除这些 Assets 窗口项目。源 Scene 会在打包开始前保存，并在失败时重新打开恢复，因此不会被清理。
+
+### 8.4 处理过的堵点与优点
+
+- 修复了图片 Smart Folder 的单文件塌缩问题。
+- 修复了 Smart Folder 资产 ID 被删除后校验仍读取旧 ID 的问题：校验和报告使用 `packagedAssetId`。
+- 保留原有的序列缺帧阻止、字体授权提醒、外部引用选项、选定合成裁剪和失败回滚。
+- 0.1.1 测试覆盖了 Windows 风格路径、Smart Folder 根目录重链、全工程未使用素材清理以及原有回滚路径。
+
+## 9. 仓库卫生
 
 - 无密钥/凭证；测试内路径均为 mock 的 `C:/...`。
 - `.gitignore`：`.DS_Store`、`dist/`（ZIP 只作为 Release 资产，不进 git）。

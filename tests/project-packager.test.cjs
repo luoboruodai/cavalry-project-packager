@@ -175,6 +175,9 @@ function createHarness(sequencePaths, behavior) {
 	function snapshot() {
 		return {
 			assetPaths: { ...assetPaths },
+			assetTypes: { ...assetTypes },
+			names: { ...names },
+			connections: { ...connections },
 			compIds: compIds.slice(),
 			allItems: allItems.slice(),
 		}
@@ -182,6 +185,12 @@ function createHarness(sequencePaths, behavior) {
 	function restoreSnapshot(value) {
 		for (const id of Object.keys(assetPaths)) delete assetPaths[id]
 		Object.assign(assetPaths, value.assetPaths)
+		for (const id of Object.keys(assetTypes)) delete assetTypes[id]
+		Object.assign(assetTypes, value.assetTypes)
+		for (const id of Object.keys(names)) delete names[id]
+		Object.assign(names, value.names)
+		for (const id of Object.keys(connections)) delete connections[id]
+		Object.assign(connections, value.connections)
 		compIds = value.compIds.slice()
 		allItems = value.allItems.slice()
 	}
@@ -250,6 +259,14 @@ function createHarness(sequencePaths, behavior) {
 			Object.prototype.hasOwnProperty.call(assetPaths, id),
 		getNiceName: (id) => names[id] || id,
 		getAssetFilePath: (id) => assetPaths[id] || '',
+		loadSmartFolderAsset(value, type) {
+			const id = 'asset#smartPackaged'
+			assetPaths[id] = norm(value)
+			assetTypes[id] = type === 'audio' ? 'audioFolder' : 'imageFolder'
+			names[id] = 'Smart Images (Packaged)'
+			if (!allItems.includes(id)) allItems.push(id)
+			return id
+		},
 		getImageSequenceFilePaths: (id) =>
 			id === 'asset#sequence'
 				? sequencePaths || [
@@ -324,6 +341,14 @@ function createHarness(sequencePaths, behavior) {
 			assetPaths[id] = value
 			state.replacements.push({ id, value })
 		},
+		connect(fromLayerId, fromAttrId, toLayerId, toAttrId) {
+			if (fromAttrId !== 'id') return
+			const target = toLayerId + '.' + toAttrId
+			const current = connections[fromLayerId]
+			const values = current ? String(current).split(',') : []
+			if (!values.includes(target)) values.push(target)
+			connections[fromLayerId] = values.join(',')
+		},
 		saveSceneAs(value) {
 			value = norm(value)
 			ensureParentDirectories(value)
@@ -351,6 +376,9 @@ function createHarness(sequencePaths, behavior) {
 			compIds = compIds.filter((value) => value !== id)
 			allItems = allItems.filter((value) => value !== id)
 			delete assetPaths[id]
+			delete assetTypes[id]
+			delete names[id]
+			delete connections[id]
 		},
 		layerExists(id) {
 			return allItems.includes(id) || Object.values(compLayersById).flat().includes(id)
@@ -610,6 +638,28 @@ function testAllCompositionsModePreservesFullScene() {
 	assert.strictEqual(harness.state.saveCount, 1)
 }
 
+function testAllCompositionsCanPruneUnusedAssets() {
+	const harness = createHarness(null, { withExtraComps: true })
+	const options = {
+		scope: 'all',
+		categorise: true,
+		includeReferences: true,
+		openFolder: false,
+		pruneUnusedAssets: true,
+	}
+	const scan = harness.context.scanProjectAssets(options)
+	assert(scan.unusedAssetIds.includes('asset#unused'))
+	const outcome = harness.context.executePackage(
+		scan,
+		'D:/packages',
+		'Clean_Full_Package',
+		options
+	)
+	assert.strictEqual(outcome.ok, true, outcome.message)
+	assert.strictEqual(harness.api.layerExists('asset#unused'), false)
+	assert.deepStrictEqual(harness.api.getComps(), ['compNode#1', 'compNode#2', 'compNode#3'])
+}
+
 function testScanFailuresBlockPackaging() {
 	for (const behavior of [
 		{ failInspectComp: 'compNode#1' },
@@ -711,6 +761,18 @@ function testProjectRelativeSavedScenePathIsResolved() {
 	)
 }
 
+function testCrossPlatformPathNormalisation() {
+	const harness = createHarness()
+	assert.strictEqual(
+		harness.context.normalisePath('C:\\source\\..\\assets\\image.png'),
+		'C:/assets/image.png'
+	)
+	assert.strictEqual(
+		harness.context.normalisePath('\\\\server\\share\\folder\\..\\image.png'),
+		'//server/share/image.png'
+	)
+}
+
 function testSmartFolderDetectedByTypeWhenDirectoryCheckFails() {
 	const harness = createHarness(null, { smartFolderNotDirectory: true })
 	const options = { categorise: true, includeReferences: true, openFolder: false }
@@ -731,9 +793,14 @@ function testSmartFolderDetectedByTypeWhenDirectoryCheckFails() {
 		)
 	)
 	assert.strictEqual(
-		harness.assetPaths['asset#smart'],
-		'D:/packages/SmartByType_Package/Assets/SmartFolders/Smart Images/cover.jpg',
-		'Smart Folder should relink via a top-level file inside the packaged folder'
+		harness.assetPaths['asset#smartPackaged'],
+		'D:/packages/SmartByType_Package/Assets/SmartFolders/Smart Images',
+		'Smart Folder should relink to the packaged folder root, not one child image'
+	)
+	assert.strictEqual(
+		harness.api.layerExists('asset#smart'),
+		false,
+		'original Smart Folder asset should not remain as a stale duplicate'
 	)
 }
 
@@ -799,12 +866,14 @@ testRelinkFailureRestoresOriginalScene()
 testSelectedCompositionKeepsNestedAndPrunesCopy()
 testSelectedCompositionCanDifferFromActive()
 testAllCompositionsModePreservesFullScene()
+testAllCompositionsCanPruneUnusedAssets()
 testScanFailuresBlockPackaging()
 testRollbackFailureIsReported()
 testBadProjectMarkerAndReportFailure()
 testSelectedPruneFailureRestoresOriginal()
 testUnsavedSceneShowsTheBlockingReason()
 testProjectRelativeSavedScenePathIsResolved()
+testCrossPlatformPathNormalisation()
 testSmartFolderDetectedByTypeWhenDirectoryCheckFails()
 testIncludeFontsCopiesAndRelinks()
 testBilingualInterface()

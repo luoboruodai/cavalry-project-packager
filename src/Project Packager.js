@@ -5,7 +5,7 @@
 ui.setTitle('Project Packager')
 
 var SCRIPT_NAME = 'Project Packager'
-var SCRIPT_VERSION = '0.1.0'
+var SCRIPT_VERSION = '0.1.1'
 
 // =============================================================================
 // LOCALISATION (English / 中文)
@@ -26,6 +26,8 @@ var STRINGS = {
 		'ui.includeReferencesTip': 'Copies external .cv/.cvc files themselves; dependencies inside them are reported only, not collected recursively.',
 		'ui.includeFonts': 'Copy font files (check licence)',
 		'ui.includeFontsTip': 'Fonts are copied to Assets/Fonts and relinked. Confirm the licence allows redistribution.',
+		'ui.pruneUnused': 'Clean package Assets (remove unused items)',
+		'ui.pruneUnusedTip': 'Removes unused Assets-window items from the packaged Scene only. The source Scene is never pruned.',
 		'ui.openFolder': 'Open package folder when complete',
 		'ui.usedDependencies': 'Used dependencies',
 		'ui.scan': 'Scan Used Assets',
@@ -78,6 +80,9 @@ var STRINGS = {
 		'err.createFolder': 'Could not create {0}.',
 		'err.writeDescription': 'Could not write projectDescription.json.',
 		'err.createSmartDest': 'Could not create Smart Folder destination: {0}',
+		'err.writeProjectMarker': 'Could not write Scenes/path-to-project.',
+		'err.smartRelink': 'Could not rebuild Smart Folder link for {0}: {1}',
+		'err.serializedAbsolutePath': 'Packaged asset {0} still contains an absolute path in the saved Scene.',
 		'err.copyFailed': 'Copy or verification failed: {0}',
 		'err.writeEarlyReport': 'Could not write package-report.json before relinking.',
 		'err.activateProject': 'Cavalry did not activate the new Project root.',
@@ -151,6 +156,8 @@ var STRINGS = {
 		'ui.includeReferencesTip': '复制外部 .cv/.cvc 文件本身；其内部嵌套依赖仅报告，不递归收集。',
 		'ui.includeFonts': '复制字体文件（注意授权）',
 		'ui.includeFontsTip': '字体将复制到 Assets/Fonts 并重链，请确认授权允许再分发。',
+		'ui.pruneUnused': '清理打包素材（移除未使用项目）',
+		'ui.pruneUnusedTip': '只清理打包副本 Assets 窗口中的未使用素材，不会修改源工程。',
 		'ui.openFolder': '完成后打开打包文件夹',
 		'ui.usedDependencies': '已使用的依赖',
 		'ui.scan': '扫描已使用素材',
@@ -203,6 +210,9 @@ var STRINGS = {
 		'err.createFolder': '无法创建 {0}。',
 		'err.writeDescription': '无法写入 projectDescription.json。',
 		'err.createSmartDest': '无法创建智能文件夹目标目录：{0}',
+		'err.writeProjectMarker': '无法写入 Scenes/path-to-project。',
+		'err.smartRelink': '无法重建智能文件夹 {0} 的引用：{1}',
+		'err.serializedAbsolutePath': '打包后的场景仍包含素材 {0} 的绝对路径。',
 		'err.copyFailed': '复制或校验失败：{0}',
 		'err.writeEarlyReport': '无法在重链前写入 package-report.json。',
 		'err.activateProject': 'Cavalry 未激活新的工程根目录。',
@@ -290,6 +300,34 @@ function normalisePath(path) {
 	var value = String(path).replace(/\\/g, '/')
 	while (value.length > 1 && value.charAt(value.length - 1) === '/') {
 		value = value.substring(0, value.length - 1)
+	}
+	// Keep Cavalry tokens such as @project/@assets intact, but collapse
+	// dot-segments in real filesystem paths so Windows and macOS produce the
+	// same package-relative destination keys.
+	if (value.charAt(0) === '/' || value.substring(0, 2) === '//' || /^[A-Za-z]:\//.test(value)) {
+		var prefix = ''
+		var rest = value
+		if (rest.substring(0, 2) === '//') {
+			prefix = '//'
+			rest = rest.substring(2)
+		} else if (rest.charAt(0) === '/') {
+			prefix = '/'
+			rest = rest.substring(1)
+		} else if (/^[A-Za-z]:\//.test(rest)) {
+			prefix = rest.substring(0, 3)
+			rest = rest.substring(3)
+		}
+		var segments = rest.split('/')
+		var stack = []
+		for (var segmentIndex = 0; segmentIndex < segments.length; segmentIndex++) {
+			var segment = segments[segmentIndex]
+			if (!segment || segment === '.') continue
+			if (segment === '..') {
+				if (stack.length > 0 && stack[stack.length - 1] !== '..') stack.pop()
+				else if (prefix === '') stack.push(segment)
+			} else stack.push(segment)
+		}
+		value = prefix + stack.join('/')
 	}
 	return value
 }
@@ -424,6 +462,12 @@ function extractLayerId(connection) {
 	var value = String(connection || '').replace(/^\s+|\s+$/g, '')
 	var dot = value.indexOf('.')
 	return dot === -1 ? value : value.substring(0, dot)
+}
+
+function extractAttributeId(connection) {
+	var value = String(connection || '').replace(/^\s+|\s+$/g, '')
+	var dot = value.indexOf('.')
+	return dot === -1 ? '' : value.substring(dot + 1)
 }
 
 function containsString(list, value) {
@@ -714,6 +758,7 @@ function scanProjectAssets(options) {
 	var result = {
 		generatedAt: nowIso(),
 		scope: options.scope === 'selected' ? 'selected' : 'all',
+		pruneUnusedAssets: Boolean(options.pruneUnusedAssets),
 		scenePath: '',
 		projectPath: '',
 		rootCompId: '',
@@ -764,13 +809,14 @@ function scanProjectAssets(options) {
 		if (containsString(result.allCompIds, assetId)) continue
 		var used = isAssetUsed(assetId, sceneLayers, result.errors)
 		if (!used) {
-			if (result.scope === 'selected') {
-				try {
-					if (api.isFileAsset(assetId) || api.getAssetType(assetId) !== 'unknown')
-						result.unusedAssetIds.push(assetId)
-				} catch (e) {
-					result.errors.push(tr('err.classifyUnused', assetId, e))
-				}
+			try {
+				// Selected-Composition packaging has always pruned unrelated file
+				// assets. In 0.1.1 the same inventory is also available to the new
+				// optional "clean package" pass for whole-project packaging.
+				if (api.isFileAsset(assetId) || api.getAssetType(assetId) !== 'unknown')
+					result.unusedAssetIds.push(assetId)
+			} catch (e) {
+				result.errors.push(tr('err.classifyUnused', assetId, e))
 			}
 			continue
 		}
@@ -906,6 +952,9 @@ function scanProjectAssets(options) {
 				entry.sourcePath,
 				reservations
 			)
+			// Smart Folder assets must be rebuilt as folder assets after the
+			// package is copied. Do not relink them to 图片1.png/a single child;
+			// that turns all Asset-from-Smart-Folder nodes into the same image.
 			entry.relinkRelative = entry.destinationRelative
 			for (var sf = 0; sf < entry.sourceFiles.length; sf++) {
 				var smartRelative = relativePath(
@@ -926,24 +975,6 @@ function scanProjectAssets(options) {
 					),
 				})
 			}
-			// api.replaceAsset() cannot retarget a Smart Folder asset at a
-			// directory — it silently keeps the old path. It must be given a
-			// file inside the new folder (verified on Cavalry 2.x). Prefer a
-			// top-level file so the folder root does not shift into a subfolder.
-			var relinkFile = ''
-			for (var rf = 0; rf < entry.mappings.length; rf++) {
-				var mappingRel = relativePath(
-					entry.destinationRelative,
-					entry.mappings[rf].destinationRelative
-				)
-				if (mappingRel.indexOf('/') === -1) {
-					relinkFile = entry.mappings[rf].destinationRelative
-					break
-				}
-			}
-			if (!relinkFile && entry.mappings.length > 0)
-				relinkFile = entry.mappings[0].destinationRelative
-			if (relinkFile) entry.relinkRelative = relinkFile
 		} else if (seq.isSequence) {
 			entry.kind = 'sequence'
 			entry.sourceFiles = seq.paths
@@ -1066,6 +1097,7 @@ function reportObject(scan, state, status, messages) {
 		var entry = scan.entries[i]
 		assets.push({
 			id: entry.id,
+			packagedAssetId: entry.packagedAssetId || null,
 			name: entry.name,
 			type: entry.type,
 			kind: entry.kind,
@@ -1087,6 +1119,7 @@ function reportObject(scan, state, status, messages) {
 		rootComposition: scan.rootCompId || null,
 		rootCompositionName: scan.rootCompName || null,
 		includedCompositions: scan.compIds,
+		pruneUnusedAssets: Boolean(scan.pruneUnusedAssets || scan.scope === 'selected'),
 		sourceScene: state.originalScenePath,
 		sourceProject: state.originalProjectPath || null,
 		packageRoot: state.packageRoot,
@@ -1177,28 +1210,35 @@ function restoreOriginalScene(state) {
 	return errors
 }
 
-function prunePackagedScene(scan, state) {
-	if (scan.scope !== 'selected') return
+function prunePackagedScene(scan, state, options) {
+	var pruneUnused = scan.scope === 'selected' || Boolean(options && options.pruneUnusedAssets)
+	if (scan.scope !== 'selected' && !pruneUnused) return
 	if (canonicalPath(api.getSceneFilePath()) !== canonicalPath(state.packageScenePath))
 		throw new Error(tr('err.pruneSafety'))
-	api.setActiveComp(scan.rootCompId)
-	for (var i = 0; i < scan.allCompIds.length; i++) {
-		var compId = scan.allCompIds[i]
-		if (containsString(scan.compIds, compId)) continue
-		api.deleteLayer(compId)
-		if (api.layerExists(compId))
-			throw new Error(tr('err.pruneComp', compId))
+	if (scan.scope === 'selected') {
+		api.setActiveComp(scan.rootCompId)
+		for (var i = 0; i < scan.allCompIds.length; i++) {
+			var compId = scan.allCompIds[i]
+			if (containsString(scan.compIds, compId)) continue
+			api.deleteLayer(compId)
+			if (api.layerExists(compId))
+				throw new Error(tr('err.pruneComp', compId))
+		}
 	}
-	for (var j = 0; j < scan.unusedAssetIds.length; j++) {
-		var assetId = scan.unusedAssetIds[j]
-		api.deleteLayer(assetId)
-		if (api.layerExists(assetId))
-			throw new Error(tr('err.pruneAsset', assetId))
+	if (pruneUnused) {
+		for (var j = 0; j < scan.unusedAssetIds.length; j++) {
+			var assetId = scan.unusedAssetIds[j]
+			api.deleteLayer(assetId)
+			if (api.layerExists(assetId))
+				throw new Error(tr('err.pruneAsset', assetId))
+		}
 	}
-	for (var k = 0; k < scan.compIds.length; k++)
-		if (!api.layerExists(scan.compIds[k]))
-			throw new Error(tr('err.pruneKept', scan.compIds[k]))
-	api.setActiveComp(scan.rootCompId)
+	if (scan.scope === 'selected') {
+		for (var k = 0; k < scan.compIds.length; k++)
+			if (!api.layerExists(scan.compIds[k]))
+				throw new Error(tr('err.pruneKept', scan.compIds[k]))
+		api.setActiveComp(scan.rootCompId)
+	}
 	if (!api.saveScene())
 		throw new Error(tr('err.savePruned'))
 }
@@ -1248,14 +1288,16 @@ function validatePackage(scan, state) {
 			for (var compIndex = 0; compIndex < scan.compIds.length; compIndex++)
 				if (!containsString(packagedComps, scan.compIds[compIndex]))
 					errors.push(tr('err.compMissing', scan.compIds[compIndex]))
-			for (var unusedIndex = 0; unusedIndex < scan.unusedAssetIds.length; unusedIndex++)
-				if (api.layerExists(scan.unusedAssetIds[unusedIndex]))
-					errors.push(tr('err.unrelatedAssetRemains', scan.unusedAssetIds[unusedIndex]))
 			if (api.getActiveComp() !== scan.rootCompId)
 				api.setActiveComp(scan.rootCompId)
 		} catch (e) {
 			errors.push(tr('err.verifyPackagedComps', e))
 		}
+	}
+	if (scan.scope === 'selected' || scan.pruneUnusedAssets) {
+		for (var unusedIndex = 0; unusedIndex < scan.unusedAssetIds.length; unusedIndex++)
+			if (api.layerExists(scan.unusedAssetIds[unusedIndex]))
+				errors.push(tr('err.unrelatedAssetRemains', scan.unusedAssetIds[unusedIndex]))
 	}
 
 	for (var i = 0; i < scan.entries.length; i++) {
@@ -1263,7 +1305,9 @@ function validatePackage(scan, state) {
 		if (!entry.included || entry.errors.length > 0) continue
 		var resolved = ''
 		try {
-			resolved = canonicalPath(api.getAssetFilePath(entry.id))
+			resolved = canonicalPath(
+				api.getAssetFilePath(entry.packagedAssetId || entry.id)
+			)
 		} catch (e) {}
 		if (!resolved || !startsWithPath(resolved, state.packageRoot)) {
 			errors.push(tr('err.resolvesOutside', entry.name))
@@ -1271,6 +1315,31 @@ function validatePackage(scan, state) {
 			errors.push(tr('err.resolvesMissing', entry.name))
 		}
 	}
+	// A saved .cv should contain @assets/... or another package-relative
+	// token, never a machine-specific absolute path. Older Cavalry builds may
+	// not expose readable JSON here; in that case the runtime path checks above
+	// remain authoritative.
+	try {
+		var serialized = String(api.readFromFile(state.packageScenePath) || '')
+		if (serialized.charAt(0) === '{') {
+			var document = JSON.parse(serialized)
+			var serializedAssets = document.assets || []
+			var expectedSerializedAssets = {}
+			for (var expectedIndex = 0; expectedIndex < scan.entries.length; expectedIndex++) {
+				var expectedEntry = scan.entries[expectedIndex]
+				if (expectedEntry.included && expectedEntry.errors.length === 0)
+					expectedSerializedAssets[expectedEntry.packagedAssetId || expectedEntry.id] = true
+			}
+			for (var serializedIndex = 0; serializedIndex < serializedAssets.length; serializedIndex++) {
+				var serializedAsset = serializedAssets[serializedIndex]
+				if (!expectedSerializedAssets[serializedAsset.nodeId]) continue
+				var serializedPath = serializedAsset.data && serializedAsset.data.filePath
+				if (!serializedPath) continue
+				if (/^(?:[A-Za-z]:[\\/]|[\\/]{1,2})/.test(String(serializedPath)))
+					errors.push(tr('err.serializedAbsolutePath', serializedAsset.nodeId || 'asset'))
+			}
+		}
+	} catch (e) {}
 	return errors
 }
 
@@ -1287,6 +1356,44 @@ function copyAndVerify(source, destination) {
 	var sourceSize = fileSizeSafe(source)
 	var destinationSize = fileSizeSafe(destination)
 	return sourceSize === destinationSize
+}
+
+function smartFolderLoadType(entry) {
+	var type = String(entry.type || '').toLowerCase()
+	return type.indexOf('audio') !== -1 ? 'audio' : 'image'
+}
+
+function relinkSmartFolderAsset(entry, packageRoot) {
+	var destinationFolder = joinPath(packageRoot, entry.destinationRelative)
+	var outgoing = stringArray(api.getOutConnections(entry.id, 'id'))
+	if (outgoing.length === 0)
+		throw new Error(tr('err.smartRelink', entry.name, 'no outgoing connections'))
+
+	var replacementId = api.loadSmartFolderAsset(
+		destinationFolder,
+		smartFolderLoadType(entry)
+	)
+	if (!replacementId)
+		throw new Error(tr('err.smartRelink', entry.name, 'Cavalry returned no replacement asset'))
+
+	for (var i = 0; i < outgoing.length; i++) {
+		var targetLayer = extractLayerId(outgoing[i])
+		var targetAttribute = extractAttributeId(outgoing[i])
+		if (!targetLayer || !targetAttribute)
+			throw new Error(tr('err.smartRelink', entry.name, outgoing[i]))
+		api.connect(replacementId, 'id', targetLayer, targetAttribute, true)
+	}
+
+	var replacementPath = canonicalPath(api.getAssetFilePath(replacementId))
+	if (!replacementPath || !startsWithPath(replacementPath, canonicalPath(destinationFolder)))
+		throw new Error(tr('err.smartRelink', entry.name, replacementPath || 'missing replacement path'))
+
+	entry.packagedAssetId = replacementId
+	if (replacementId !== entry.id) {
+		api.deleteLayer(entry.id)
+		if (api.layerExists(entry.id))
+			throw new Error(tr('err.smartRelink', entry.name, 'old asset was not removed'))
+	}
 }
 
 function executePackage(scan, parentFolder, requestedName, options) {
@@ -1368,6 +1475,8 @@ function executePackage(scan, parentFolder, requestedName, options) {
 			if (!ensureFolder(joinPath(packageRoot, requiredFolders[d])))
 				throw new Error(tr('err.createFolder', requiredFolders[d]))
 		}
+		if (!api.writeToFile(joinPath(packageRoot, 'Scenes/path-to-project'), '..', false))
+			throw new Error(tr('err.writeProjectMarker'))
 
 		if (
 			!api.writeToFile(
@@ -1420,14 +1529,18 @@ function executePackage(scan, parentFolder, requestedName, options) {
 		for (var r = 0; r < scan.entries.length; r++) {
 			var relinkEntry = scan.entries[r]
 			if (!relinkEntry.included || relinkEntry.errors.length > 0) continue
-			// Absolute path inside the package: Cavalry re-serialises it as
-			// project-relative (@project/...) when the Scene is saved, which
-			// keeps the package portable. Passing '@project/...' directly to
-			// replaceAsset does NOT work (verified on Cavalry 2.x).
-			api.replaceAsset(
-				relinkEntry.id,
-				joinPath(packageRoot, relinkEntry.relinkRelative)
-			)
+			if (relinkEntry.kind === 'smartFolder') {
+				relinkSmartFolderAsset(relinkEntry, packageRoot)
+			} else {
+				// Cavalry rewrites this package-local absolute path to an
+				// @assets/... path when the Scene is saved. Passing @project
+				// directly to replaceAsset is not portable on all Cavalry builds.
+				api.replaceAsset(
+					relinkEntry.id,
+					joinPath(packageRoot, relinkEntry.relinkRelative)
+				)
+				relinkEntry.packagedAssetId = relinkEntry.id
+			}
 		}
 
 		var saveAsResult = api.saveSceneAs(state.packageScenePath)
@@ -1435,7 +1548,7 @@ function executePackage(scan, parentFolder, requestedName, options) {
 			throw new Error(tr('err.savePackaged'))
 		if (canonicalPath(api.getSceneFilePath()) !== canonicalPath(state.packageScenePath))
 			throw new Error(tr('err.saveAsSwitch'))
-		prunePackagedScene(scan, state)
+		prunePackagedScene(scan, state, options)
 
 		var validationErrors = validatePackage(scan, state)
 		if (validationErrors.length > 0) {
@@ -1535,6 +1648,7 @@ var includeReferencesCheckbox = new ui.Checkbox(true)
 var includeFontsCheckbox = new ui.Checkbox(false)
 var openFolderCheckbox = new ui.Checkbox(true)
 var selectedCompCheckbox = new ui.Checkbox(false)
+var pruneUnusedCheckbox = new ui.Checkbox(true)
 
 var scanButton = new ui.Button(tr('ui.scan'))
 var packageButton = new ui.Button(tr('ui.package'))
@@ -1557,6 +1671,7 @@ function optionValues() {
 		includeReferences: includeReferencesCheckbox.getValue(),
 		includeFonts: includeFontsCheckbox.getValue(),
 		openFolder: openFolderCheckbox.getValue(),
+		pruneUnusedAssets: pruneUnusedCheckbox.getValue(),
 	}
 }
 
@@ -1680,6 +1795,9 @@ includeFontsCheckbox.onValueChanged = function () {
 selectedCompCheckbox.onValueChanged = function () {
 	runScan()
 }
+pruneUnusedCheckbox.onValueChanged = function () {
+	runScan()
+}
 
 packageButton.onClick = function () {
 	runScan()
@@ -1762,6 +1880,9 @@ optionsColLeft.add(optionRow(openFolderCheckbox, 'ui.openFolder'))
 optionsColRight.add(optionRow(categoriseCheckbox, 'ui.categorise'))
 optionsColRight.add(
 	optionRow(includeFontsCheckbox, 'ui.includeFonts', 'ui.includeFontsTip')
+)
+optionsColRight.add(
+	optionRow(pruneUnusedCheckbox, 'ui.pruneUnused', 'ui.pruneUnusedTip')
 )
 optionsColumns.add(optionsColLeft)
 optionsColumns.add(optionsColRight)
