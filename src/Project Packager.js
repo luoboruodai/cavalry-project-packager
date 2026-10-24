@@ -5,7 +5,7 @@
 ui.setTitle('Project Packager')
 
 var SCRIPT_NAME = 'Project Packager'
-var SCRIPT_VERSION = '0.1.1'
+var SCRIPT_VERSION = '0.1.2'
 
 // =============================================================================
 // LOCALISATION (English / 中文)

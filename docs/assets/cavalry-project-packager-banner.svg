@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="300" viewBox="0 0 1200 300" role="img" aria-labelledby="title desc">
+  <title id="title">Cavalry Project Packager — portable project delivery</title>
+  <desc id="desc">Workflow illustration, not a software screenshot: used Scene assets move through Project Packager into a validated portable Cavalry Project.</desc>
+  <defs>
+    <linearGradient id="accent" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#2fcd71"/>
+      <stop offset="1" stop-color="#078430"/>
+    </linearGradient>
+    <linearGradient id="wash" x1="0" x2="1">
+      <stop offset="0" stop-color="#2fcd71" stop-opacity=".13"/>
+      <stop offset="1" stop-color="#2fcd71" stop-opacity="0"/>
+    </linearGradient>
+    <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse">
+      <path d="M32 0H0V32" fill="none" stroke="#d9e7ff" stroke-opacity=".05"/>
+    </pattern>
+  </defs>
+  <rect width="1200" height="300" rx="24" fill="#131a24"/>
+  <rect x="1" y="1" width="1198" height="298" rx="23" fill="url(#grid)" stroke="#2a394b"/>
+  <rect x="1" y="1" width="550" height="298" rx="23" fill="url(#wash)"/>
+  <rect x="52" y="50" width="6" height="200" rx="3" fill="url(#accent)"/>
+  <g font-family="SFMono-Regular,Menlo,Consolas,monospace">
+    <text x="82" y="70" fill="#2fcd71" font-size="12" letter-spacing="2.2">CAVALRY / PROJECT DELIVERY</text>
+    <text x="80" y="126" fill="#f4f8ff" font-size="39" font-weight="700" letter-spacing="1">PROJECT PACKAGER</text>
+    <text x="82" y="160" fill="#aabbd2" font-size="14" letter-spacing=".6">USED ASSETS → PORTABLE PROJECT</text>
+    <text x="82" y="210" fill="#f4f8ff" font-size="12">SMART FOLDERS</text>
+    <text x="82" y="234" fill="#aabbd2" font-size="11">COLLECT  /  RELINK  /  VALIDATE</text>
+  </g>
+  <g font-family="SFMono-Regular,Menlo,Consolas,monospace">
+    <text x="625" y="58" fill="#aabbd2" font-size="10" letter-spacing="1.4" text-anchor="middle">01 / SCAN</text>
+    <rect x="555" y="76" width="140" height="144" rx="12" fill="#182330" stroke="#2a394b"/>
+    <path d="M605 101h29l14 14v55h-43z" fill="#202f3d" stroke="#aabbd2" stroke-width="1.4"/>
+    <path d="M634 101v15h14" fill="none" stroke="#aabbd2" stroke-width="1.4"/>
+    <text x="626" y="140" fill="#f4f8ff" font-size="13" font-weight="700" text-anchor="middle">.CV</text>
+    <circle cx="581" cy="185" r="6" fill="#2fcd71" fill-opacity=".8"/>
+    <circle cx="607" cy="185" r="6" fill="#2fcd71" fill-opacity=".5"/>
+    <circle cx="633" cy="185" r="6" fill="#2fcd71" fill-opacity=".25"/>
+    <path d="M581 179l26-30 26 30" fill="none" stroke="#76e8c0" stroke-opacity=".5"/>
+    <text x="625" y="244" fill="#f4f8ff" font-size="11" letter-spacing="1" text-anchor="middle">USED ASSETS</text>
+
+    <path d="M710 148h38m-8-8 8 8-8 8" fill="none" stroke="#2fcd71" stroke-width="1.6"/>
+
+    <text x="835" y="58" fill="#aabbd2" font-size="10" letter-spacing="1.4" text-anchor="middle">02 / RELINK</text>
+    <rect x="765" y="76" width="140" height="144" rx="12" fill="#183022" stroke="#2fcd71" stroke-opacity=".7"/>
+    <path d="M806 123l29-16 29 16-29 16z" fill="#2fcd71" fill-opacity=".2" stroke="#76e8c0" stroke-width="1.4"/>
+    <path d="M806 123v35l29 16 29-16v-35M835 139v35" fill="none" stroke="#76e8c0" stroke-width="1.4"/>
+    <path d="M821 115l29 16" fill="none" stroke="#76e8c0" stroke-width="1.4"/>
+    <text x="835" y="199" fill="#f4f8ff" font-size="11" font-weight="700" letter-spacing="1" text-anchor="middle">PACKAGER</text>
+    <text x="835" y="244" fill="#f4f8ff" font-size="11" letter-spacing="1" text-anchor="middle">COPY + RELINK</text>
+
+    <path d="M920 148h38m-8-8 8 8-8 8" fill="none" stroke="#2fcd71" stroke-width="1.6"/>
+
+    <text x="1045" y="58" fill="#aabbd2" font-size="10" letter-spacing="1.4" text-anchor="middle">03 / VALIDATE</text>
+    <rect x="975" y="76" width="140" height="144" rx="12" fill="#182330" stroke="#2a394b"/>
+    <path d="M1005 124h27l8-12h25l8 12h12v55h-80z" fill="#202f3d" stroke="#aabbd2" stroke-width="1.4"/>
+    <path d="M1026 151l13 13 27-29" fill="none" stroke="#2fcd71" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="1045" y="199" fill="#f4f8ff" font-size="11" font-weight="700" letter-spacing="1" text-anchor="middle">PROJECT</text>
+    <text x="1045" y="244" fill="#f4f8ff" font-size="11" letter-spacing="1" text-anchor="middle">PORTABLE</text>
+    <text x="1138" y="274" fill="#aabbd2" font-size="10" letter-spacing="1.2" text-anchor="end">V0.1.2 / UI SCRIPT</text>
+  </g>
+</svg>

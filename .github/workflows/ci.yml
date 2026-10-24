@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  source-tests:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check script syntax
+        run: node --check "src/Project Packager.js"
+      - name: Run regression suite
+        run: node --test tests/project-packager.test.cjs
+
+  package:
+    needs: source-tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Build and verify installation archive
+        run: python3 packaging/build_release.py
+      - name: Reverify existing release artifacts
+        run: python3 packaging/build_release.py --verify-dir dist/release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-packages
+          path: dist/release/
+          if-no-files-found: error

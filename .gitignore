@@ -1,2 +1,5 @@
 .DS_Store
 dist/
+private/
+PROJECT.md
+__pycache__/

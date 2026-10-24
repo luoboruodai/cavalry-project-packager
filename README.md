@@ -1,131 +1,60 @@
-# Cavalry Project Packager（工程打包器）
+# Cavalry Project Packager
 
-[English](#english) | [中文](#中文)
+Package the file assets your Cavalry Compositions actually use into a portable Project, with Smart Folder relinking and post-package validation.
 
----
+[中文说明](README.zh-CN.md) · [Download v0.1.2](https://github.com/luoboruodai/cavalry-project-packager/releases/tag/v0.1.2) · [Installation](docs/INSTALL.md) · [Changelog](CHANGELOG.md)
 
-## 中文
+**v0.1.2** · Single-file Cavalry UI Script · macOS / Windows · English / 中文
 
-一个用于 [Cavalry](https://cavalry.studio/) 的单文件 UI Script：收集工程中**实际使用**的文件素材（图片、视频、音频、图片序列、Smart Folder、外部 `.cv/.cvc` 引用，可选字体），复制到一个新的便携 Project 中并重链素材，再把 Scene 副本保存进包内。其他用户直接打开包内 Scene 即可，**素材不会脱机**。界面为**中英双语**，点击右上角 **中文 / EN** 按钮切换。
+<div align="center">
 
-当前版本：**0.1.1**
+<img src="docs/assets/cavalry-project-packager-banner.svg" alt="Cavalry Project Packager workflow: scan used assets, package and relink, validate a portable Project" width="960">
 
-本版本更新记录见 [CHANGELOG.md](CHANGELOG.md)。
+[![CI](https://github.com/luoboruodai/cavalry-project-packager/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/luoboruodai/cavalry-project-packager/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/luoboruodai/cavalry-project-packager?label=release)](https://github.com/luoboruodai/cavalry-project-packager/releases/tag/v0.1.2)
+[![License](https://img.shields.io/badge/license-MIT-2fcd71)](LICENSE)
 
-### 功能特性
+</div>
 
-- **自动收集已使用素材**：只打包被合成实际引用的文件素材，未使用的素材不会混入包内
-- **Smart Folder 打包**：整目录递归复制并保留层级，重链到包内 `Assets/SmartFolders/`（按路径与素材类型双重识别，空文件夹跳过并警告）
-- **Smart Folder 正确重链**：打包后重建包内 Smart Folder 资产并重新连接 `Asset from Smart Folder`，不会把 26 张图片错误收敛成图片1
-- **图片序列逐帧收集**：缺帧会阻止打包并提示
-- **跨平台便携重链**：统一规范化 Windows/macOS 路径，写入 `Scenes/path-to-project`，并校验包内资产没有绝对路径
-- **清理打包素材**：可选移除打包副本 Assets 窗口中的未使用素材；源工程不会被清理
-- **按整个工程或单个合成打包**：限定合成模式会包含嵌套 Pre-Comp，并只清理包内副本，不影响源工程
-- **可选复制外部引用与字体**：外部 `.cv/.cvc` 引用复制到 `Assets/References/`；字体复制到 `Assets/Fonts/`（默认关闭，请注意字体授权）
-- **安全可靠**：打包前自动保存源 Scene；打包后重新打开包内 Scene 逐项校验；任何失败自动回滚，不改动源工程
-- **中英双语界面**：所有按钮、选项、状态信息与扫描结果均可切换
+## Release status
 
-### 安装
+| Product | Status | Package |
+| --- | --- | --- |
+| Cavalry Project Packager | `v0.1.2` · documentation and distribution refresh | One Cavalry UI Script, bilingual offline guides, MIT |
 
-1. 在 Cavalry 中点击 **Scripts → Show Scripts Folder**。
-2. 把 `Project Packager.js` 复制到打开的文件夹根目录。
-   - Windows 常见路径：`%APPDATA%\Cavalry\Scripts\`
-   - macOS 常见路径：`~/Library/Application Support/Cavalry/Scripts/`
-3. 回到 Cavalry，重新打开 **Scripts** 菜单，点击 **Project Packager**。
+The collection, relinking and rollback behaviour is carried forward from `v0.1.1`; this release focuses on the repository, installation experience and verifiable release artifacts.
 
-也可以直接从 [Releases](../../releases) 下载 ZIP 解压安装。
+## What it does
 
-### 使用方法
+- **Collects used file assets:** images, footage, audio, data, image sequences, Smart Folders and optional external references or fonts.
+- **Keeps Smart Folders intact:** preserves folder hierarchy, rebuilds the packaged Smart Folder asset and rewires its connections instead of collapsing it to one child file.
+- **Creates a portable Project:** copies assets, relinks the packaged Scene and writes `Scenes/path-to-project` for relocation.
+- **Supports focused handoff:** package every Composition or only the selected/active Composition and its nested Pre-Comps.
+- **Checks the result:** missing files and sequence gaps block packaging; the packaged Scene is reopened and validated, with rollback on failure.
+- **Speaks English and Chinese:** switch the script interface without changing the project.
 
-1. 打开并**保存**一个 `.cv` Scene（未保存的场景没有文件路径，无法扫描）。`.cvc` Component 请先在 Scene 中导入。
-2. 默认打包**所有合成实际使用**的文件素材；如只需一个合成，先在 Assets 窗口选中该 Composition，再勾选"仅打包选中/活动合成（含嵌套预合成）"。
-3. 按需勾选：按类型分类素材 / 复制外部引用 / 复制字体文件 / 清理打包素材 / 完成后打开打包文件夹。
-4. 选择已存在的**目标父文件夹**，填写尚未存在的**打包名称**（不会合并或覆盖旧包）。
-5. 点击 **Scan Used Assets / 扫描已使用素材** 检查数量、路径、缺失文件和警告，再点击 **Package Project / 开始打包**。
-6. 分享或迁移时发送**整个包目录**，不要只发送 `Scenes` 中的 `.cv`。
+## Download
 
-### 输出结构
+| File | Purpose |
+| --- | --- |
+| [Cavalry-Project-Packager-v0.1.2.zip](https://github.com/luoboruodai/cavalry-project-packager/releases/download/v0.1.2/Cavalry-Project-Packager-v0.1.2.zip) | Ready-to-copy script, bilingual offline installation guides and LICENSE |
+| [SHA256SUMS.txt](https://github.com/luoboruodai/cavalry-project-packager/releases/download/v0.1.2/SHA256SUMS.txt) | SHA-256 for the installation archive |
 
-```text
-<打包名称>/
-├─ projectDescription.json
-├─ Assets/
-│  ├─ Images/  Footage/  Audio/  Data/
-│  ├─ Sequences/  SmartFolders/  Fonts/  References/
-├─ Scenes/
-│  ├─ <原 Scene 名>.cv
-│  └─ path-to-project
-├─ Renders/
-├─ Autosave/
-└─ package-report.json
-```
+**Use the installation ZIP, not GitHub's automatic “Source code” archive.**
 
-### 行为与限制
+[Release notes](https://github.com/luoboruodai/cavalry-project-packager/releases/tag/v0.1.2) · [Installation guide](docs/INSTALL.md) · [中文安装指南](docs/INSTALL.zh-CN.md)
 
-- 打包开始前会**保存一次源 Scene**：当前未保存的改动会写入源 `.cv`。
-- 缺失素材、序列缺帧或扫描错误会阻止打包。
-- “清理打包素材”只作用于打包副本；源工程的 Assets 窗口、合成和图层不会被删除。
-- 字体默认只报告不复制；在线/非文件依赖（如 Google 表格）保持外部引用并给出警告。
-- 外部 `.cv/.cvc` 引用可选择复制，但不会递归收集这些外部工程内部的依赖。
-- `package-report.json` 包含原素材的本机绝对路径；对外分享前请检查或移除，避免泄露本机目录信息。移除报告不影响包内 Scene 与素材使用。
-- 建议先在工程副本上验证，并在交付前做一次整包迁移测试。
+## Install and use
 
-### 开发测试
+1. Download the ZIP and verify it against `SHA256SUMS.txt`.
+2. In Cavalry, choose **Scripts → Show Scripts Folder**. Copy `Project Packager.js` from the archive's `Scripts` folder into that directory.
+3. Reopen **Scripts → Project Packager**. Open and save a `.cv` Scene before scanning.
+4. Choose the whole project or a selected Composition, set the destination and a new package name, then click **Scan Used Assets**.
+5. Review the scan and click **Package Project**. Share the entire generated Project folder, not only the `.cv` file.
 
-需要 Node.js：
+The full guide covers verification, upgrades, removal and recovery: [English](docs/INSTALL.md) · [中文](docs/INSTALL.zh-CN.md).
 
-```bash
-node --check "src/Project Packager.js"
-node --test tests/project-packager.test.cjs
-```
-
-### 致谢与许可
-
-本项目基于 [shouzhang123/cavalry-project-packager](https://github.com/shouzhang123/cavalry-project-packager) 继续开发，修复了 Smart Folder 打包在真实 Cavalry 环境中的多个问题并新增中英双语界面；原作者部分思路来自 [Canvalry Scripts](https://github.com/phillip-motion/Canvalry-scripts)。[MIT License](LICENSE)（Copyright © 2025 Phill T）。
-
----
-
-## English
-
-A single-file UI Script for [Cavalry](https://cavalry.studio/) that collects the file assets **actually used** by your Compositions — images, footage, audio, image sequences, **Smart Folders**, external `.cv/.cvc` references and (optionally) fonts — copies them into a new portable Project, relinks everything, and saves a copy of the Scene inside the package. Recipients just open the packaged Scene: **no offline media**. The interface is bilingual (English / 中文) — use the **中文 / EN** button in the top-right corner.
-
-Current version: **0.1.1**
-
-See [CHANGELOG.md](CHANGELOG.md) for the bilingual 0.1.1 release notes.
-
-### Features
-
-- **Collects used assets only**: unused assets never end up in the package
-- **Smart Folder packaging**: copied recursively with hierarchy preserved into `Assets/SmartFolders/` (detected by path and by asset type; empty folders are skipped with a warning)
-- **Correct Smart Folder relinking**: package-time Smart Folder assets are rebuilt inside the package and all `Asset from Smart Folder` links are rewired, so a 26-image folder does not collapse to `image1.png`
-- **Image sequences collected frame by frame**: frame-number gaps block packaging
-- **Cross-platform portability**: Windows/macOS path separators are normalised, `Scenes/path-to-project` is written explicitly, and packaged asset paths are checked for absolute-path leaks
-- **Clean package option**: optionally removes unused Assets-window items from the packaged copy while leaving the source Scene untouched
-- **Whole project or a single Composition**: selected-Composition mode includes nested Pre-Comps and only prunes the packaged copy, never the source
-- **Optional external references & fonts**: `.cv/.cvc` references go to `Assets/References/`; fonts to `Assets/Fonts/` (off by default — check the licence)
-- **Safe by design**: saves the source Scene first, reopens and validates the packaged Scene afterwards, and rolls back automatically on any failure
-- **Bilingual UI**: every label, option, status line and scan message switches between English and Chinese
-
-### Installation
-
-1. In Cavalry, choose **Scripts → Show Scripts Folder**.
-2. Copy `Project Packager.js` into that folder.
-   - Windows: `%APPDATA%\Cavalry\Scripts\`
-   - macOS: `~/Library/Application Support/Cavalry/Scripts/`
-3. Back in Cavalry, reopen the **Scripts** menu and click **Project Packager**.
-
-Or download the ZIP from [Releases](../../releases) and unzip it first.
-
-### Usage
-
-1. Open and **save** a `.cv` Scene (an unsaved scene has no file path and cannot be scanned). Import `.cvc` Components into a Scene first.
-2. By default, all file assets used by **any** Composition are packaged. To package just one Composition, select it in the Assets Window and enable "Only selected/active Comp + nested Pre-Comps".
-3. Toggle options as needed: categorise by type / copy external references / copy fonts / clean unused package assets / open folder when complete.
-4. Choose an existing **destination parent folder** and a **package name** that does not exist yet (old packages are never merged or overwritten).
-5. Click **Scan Used Assets** to review counts, paths, missing files and warnings, then click **Package Project**.
-6. When sharing, send the **entire package folder**, not just the `.cv` inside `Scenes`.
-
-### Output structure
+## Output structure
 
 ```text
 <Package name>/
@@ -141,25 +70,31 @@ Or download the ZIP from [Releases](../../releases) and unzip it first.
 └─ package-report.json
 ```
 
-### Behaviour & limitations
+## Behaviour and limits
 
-- The source Scene is **saved once** before packaging begins: unsaved changes are written to the source `.cv`.
-- Missing assets, sequence frame gaps or scan errors block packaging.
-- “Clean package Assets” only prunes the packaged Scene; it never deletes assets from the source project.
-- Fonts are reported but not copied unless the font option is enabled; online/non-file dependencies (e.g. Google Sheets) stay external with a warning.
-- External `.cv/.cvc` references can be copied, but dependencies inside them are not collected recursively.
-- `package-report.json` contains absolute paths from your machine — review or remove it before sharing. Removing it does not affect the packaged Scene.
-- Verify on a copy of your project first, and do a full migration test before delivery.
+- Packaging **saves the source Scene once** before copying. Test on a project copy first.
+- **Clean package Assets** removes unused Assets-window items only from the packaged copy; it does not prune the source Scene.
+- Fonts are reported but not copied by default. Enable copying only when the font licence permits redistribution.
+- External `.cv/.cvc` references can be copied, but their own dependencies are not collected recursively.
+- Online or non-file dependencies, such as Google Sheets, remain external and are reported as warnings.
+- `package-report.json` contains source-machine absolute paths. Review or remove it before sharing; removing the report does not affect the packaged Scene.
+- Complete a real migration test before delivery. Node mocks and CI archive checks do not replace validation in your Cavalry installation.
 
-### Development & tests
+## Build, test and release
 
-Requires Node.js:
+Development requires Node.js and Python 3. Neither is needed to run the installed Cavalry script.
 
-```bash
+```sh
 node --check "src/Project Packager.js"
 node --test tests/project-packager.test.cjs
+python3 packaging/build_release.py
+python3 packaging/build_release.py --verify-dir dist/release
 ```
 
-### Credits & licence
+CI runs the source checks on Ubuntu, macOS and Windows, then builds and verifies the installation archive. See [Development notes](docs/DEVELOPMENT.md) for the architecture, Cavalry API findings and release process.
 
-Continued from [shouzhang123/cavalry-project-packager](https://github.com/shouzhang123/cavalry-project-packager), fixing several Smart Folder packaging issues found on real Cavalry installations and adding a bilingual UI; the original project drew ideas from [Canvalry Scripts](https://github.com/phillip-motion/Canvalry-scripts). [MIT License](LICENSE) (Copyright © 2025 Phill T).
+## Credits and licence
+
+Continued from [shouzhang123/cavalry-project-packager](https://github.com/shouzhang123/cavalry-project-packager), with bilingual UI and Smart Folder packaging fixes. The upstream project drew ideas from [Canvalry Scripts](https://github.com/phillip-motion/Canvalry-scripts).
+
+[MIT License](LICENSE) · Copyright © 2025 Phill T
